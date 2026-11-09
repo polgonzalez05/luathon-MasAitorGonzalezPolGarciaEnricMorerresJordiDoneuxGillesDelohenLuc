@@ -11,6 +11,7 @@ function Character:new()
     self.jumpSpeed = -450
     self.velocityY = 0
     self.groundY = 540
+    
 end
 
 
