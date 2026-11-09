@@ -1,0 +1,24 @@
+local Actor = Actor or require "src/actor"
+local Vector = Vector or require "lib/vector"
+
+local Character = Actor:extend()
+
+function Character:new()
+  Ship.super.new(self, "src/textures/spaceShips_001.png", 180, 540, 0)
+  self.rot = math.pi
+  self.actualTime = 0
+  self.cooldown = 0.3
+end
+
+function Character:update(dt)
+  
+
+end
+
+function Character:draw()
+end
+
+return Character
+
+
+
