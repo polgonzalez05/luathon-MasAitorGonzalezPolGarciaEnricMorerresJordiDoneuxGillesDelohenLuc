@@ -1,25 +1,24 @@
-local Vector = Vector or require "lib/vector"
-local Actor = Actor or require "lib/actor"
-local Character = Character or require "src/character"
-local Menu = Menu or require "src/menu"
-
-actorList = {}
+local Character = require "src/character"
+local player
 
 function love.load()
-  actorList[#actorList + 1] = Character:new()
+    player = Character()
 end
 
 function love.update(dt)
-  if love.keyboard.isDown("escape") then
-    love.event.quit()
-  end
+    if love.keyboard.isDown("escape") then
+        love.event.quit()
+    end
+
+    player:update(dt)
 end
 
 function love.draw()
-  
+    player:draw()
 end
 
-
-function love.mousepressed(x, y, button)
-    handlePress(x, y, button)
+function love.keypressed(key)
+    if key == "space" then
+        player:jump()
+    end
 end

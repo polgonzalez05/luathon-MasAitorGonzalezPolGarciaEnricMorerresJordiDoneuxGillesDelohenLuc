@@ -6,7 +6,7 @@ function Actor:new(_image, _x, _y, _speed)
     self.position = Vector.new(_x or 0, _y or 0)
     self.forward = Vector.new(1, 0)
     self.speed = _speed or 150
-    self.image = love.graphics.newImage(_image or "src/textures/bear.png")
+    self.image = love.graphics.newImage(_image or "src/textures/idle/char-idle-0.png")
     self.origin = Vector.new(self.image:getWidth() / 2, self.image:getHeight() / 2)
     self.width = self.image:getWidth()
     self.height = self.image:getHeight()
