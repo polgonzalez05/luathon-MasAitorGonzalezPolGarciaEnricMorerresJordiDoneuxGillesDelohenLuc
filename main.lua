@@ -1,45 +1,24 @@
 local Character = require "src/character"
-local Menu = require "src/menu"
-
-local menu = Menu:new()
-local estado = "menu"
 local player
 
-local function elegir(accion)
-    if accion == "jugar" then
-        player = Character()
-        estado = "juego"
-    elseif accion == "salir" then
-        love.event.quit()
-    end
+function love.load()
+    player = Character()
 end
 
 function love.update(dt)
-    if estado == "juego" then
-        player:update(dt)
+    if love.keyboard.isDown("escape") then
+        love.event.quit()
     end
+
+    player:update(dt)
 end
 
 function love.draw()
-    if estado == "menu" then
-        menu:draw()
-    else
-        player:draw()
-    end
-end
-
-function love.mousepressed(x, y, boton)
-    if estado == "menu" then
-        elegir(menu:mousepressed(x, y, boton))
-    end
+    player:draw()
 end
 
 function love.keypressed(key)
-    if estado == "menu" then
-        elegir(menu:keypressed(key))
-    elseif key == "space" then
+    if key == "space" then
         player:jump()
-    elseif key == "escape" then
-        estado = "menu"
     end
 end
