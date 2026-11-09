@@ -16,6 +16,7 @@ function Character:update(dt)
 end
 
 function Character:draw()
+  
 end
 
 return Character
