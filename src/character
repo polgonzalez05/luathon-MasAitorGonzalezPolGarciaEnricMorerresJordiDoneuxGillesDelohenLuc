@@ -1,10 +1,10 @@
-local Actor = Actor or require "src/actor"
+local AnimatedActor = AnimatedActor or require "lib/animatedActor"
 local Vector = Vector or require "lib/vector"
 
-local Character = Actor:extend()
+local Character = AnimatedActor:extend()
 
 function Character:new()
-  Ship.super.new(self, "src/textures/spaceShips_001.png", 180, 540, 0)
+  Character.super.new(self, "src/textures/spaceShips_001.png", 180, 540, 0)
   self.rot = math.pi
   self.actualTime = 0
   self.cooldown = 0.3
