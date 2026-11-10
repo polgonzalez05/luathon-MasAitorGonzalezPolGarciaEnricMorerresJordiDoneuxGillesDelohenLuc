@@ -1,6 +1,6 @@
 function love.conf(t)
-  t.window.width = 360 
-  t.window.height = 600
+  t.window.width = 1000
+  t.window.height = 500
   t.console = true
-  t.title = "LuaBubble"
+  t.title = "LUATHON"
 end
