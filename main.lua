@@ -7,10 +7,11 @@ local Character = Character or require "src/character"
 actorList = {}
 
 function love.load()
-  local vendingMachine = VendingMachine()
-  table.insert(actorList, vendingMachine)
-  character = Character()
+  local character = Character()
   table.insert(actorList, character)
+  local vendingMachine = VendingMachine(character)
+  table.insert(actorList, vendingMachine)
+  
 end
 
 function love.update(dt)
