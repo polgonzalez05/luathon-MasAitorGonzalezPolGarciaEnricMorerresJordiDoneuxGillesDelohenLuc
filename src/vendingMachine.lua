@@ -18,7 +18,7 @@ function VendingMachine:new(character)
 
   self.probabilidadIdle = 30
   self.probabilidadWalk = 30
-  self.probabilidadAttack = 40
+  self.probabilidadAttack = 40 
 
   self.velocidadBarrido = 500
   self.faseBarrido = ""
@@ -44,7 +44,7 @@ function VendingMachine:new(character)
     "barrido"
   }
 
-  self.vidaMax = 100
+  self.vidaMax = 1000
   self.vida = self.vidaMax
   self.vivo = true
 

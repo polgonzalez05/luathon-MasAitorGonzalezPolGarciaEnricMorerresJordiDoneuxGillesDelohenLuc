@@ -15,6 +15,8 @@ function love.load()
   local character = Character()
   local vendingMachine = VendingMachine(character)
 
+  character.boss = vendingMachine
+  
   table.insert(actorList, character)
   table.insert(actorList, vendingMachine)
   

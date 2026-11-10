@@ -1,4 +1,4 @@
-local AnimatedActor = AnimatedActor or require "lib/actor"
+local AnimatedActor = AnimatedActor or require "lib/animatedActor"
 local Vector = Vector or require "lib/vector"
 
 local Proyectil = AnimatedActor:extend()
