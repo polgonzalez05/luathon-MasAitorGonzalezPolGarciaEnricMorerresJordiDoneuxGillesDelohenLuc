@@ -1,13 +1,14 @@
 local AnimatedActor = AnimatedActor or require "lib/animatedActor"
 local Vector = Vector or require "lib/vector"
 local StateMachine = StateMachine or require "lib/FSM/StateMachine"
---local Proyectil = Proyectil or require "src/proyectil"
+local Proyectil = Proyectil or require "src/proyectil"
 
 local VendingMachine = AnimatedActor:extend()
 
 function VendingMachine:new(character)
   VendingMachine.super.new(self, "src/textures/vendingMachineSpritesheet.png", 200, 250, 8, 0, 0, 24, 12)
 
+  self.character = character
 
   self.espera = love.math.random(30, 200) / 100
 
@@ -24,6 +25,18 @@ function VendingMachine:new(character)
   self.direccionBarrido = 1
   self.esperaP = 0.6
   self.tiempoP = 0
+
+  self.sueloY = self.position.y
+  self.faseAereo = ""
+
+  self.alturaAerea = 250
+  self.velocidadVuelo = 700
+  self.velocidadCaida = 1400
+  self.esperaAereo = 0.5
+  self.tiempoAereo = 0
+  self.rangoAereo = 80
+  self.objetivoX = 0
+  self.objetivoY = 0
 
   self.ataques = {
     "aereal",
@@ -86,7 +99,6 @@ function VendingMachine:new(character)
     end,
 
     exit = function()
-        self:terminarAtaque()
     end,
 
     from = {"moving", "idle", "aereal", "throw", "barrido"},
@@ -102,7 +114,6 @@ function VendingMachine:new(character)
     end,
 
     exit = function()
-        self:terminarAtaque()
     end,
 
     from = {"moving", "idle", "aereal", "throw", "barrido"},
@@ -207,8 +218,40 @@ function VendingMachine:update(dt)
         end
 
       end
+    elseif (estado == "aereal") then
+      if (self.faseAereo == "volar") then
+        local dx = self.objetivoX - self.position.x
+        local dy = self.objetivoY - self.position.y
+        local dist = math.sqrt(dx * dx + dy * dy)
+        local paso = self.velocidadVuelo * dt
+
+        if (dist <= paso) then
+          self.position.x = self.objetivoX
+          self.position.y = self.objetivoY
+          self.tiempoAereo = self.esperaAereo
+          self.faseAereo = "esperar"
+        else
+          self.position.x = self.position.x + dx / dist * paso
+          self.position.y = self.position.y + dy / dist * paso
+        end
+
+      elseif (self.faseAereo == "esperar") then
+        self.tiempoAereo = self.tiempoAereo - dt
+        
+        if (self.tiempoAereo <= 0) then
+          self.faseAereo = "caer"
+        end
+      elseif (self.faseAereo == "caer") then
+        self.position.y = self.position.y + self.velocidadCaida * dt
+        
+        if (self.position.y >= self.sueloY) then
+          self.position.y = self.sueloY
+          self:terminarAtaque()
+        end
+      end
     end
   end
+  
 
   bossState:tick(dt)
 
@@ -241,18 +284,46 @@ function VendingMachine:terminarAtaque()
   self.speed = 0
   self.rot = 0
   self.faseBarrido = ""
+  self.faseAereo = ""
   self.ataqueTerminado = true
 end
 
 function VendingMachine:aerealAttack()
     print("esta haciendo un ataque aereo")
-    self:terminarAtaque()
+
+    self.speed = 0
+    self.rot = 0
+    self.objetivoY = math.max(0, self.sueloY - self.alturaAerea)
+    self:elegirObjetivoAereo()
+    self.faseAereo = "volar"
 end
+
+function VendingMachine:elegirObjetivoAereo()
+  local ancho = love.graphics.getWidth()
+  local c = self.character
+
+  local centroJugador = c.position.x + c.width * c.scale.x / 2
+  local offset = love.math.random(-self.rangoAereo, self.rangoAereo)
+
+  local x = centroJugador + offset - self.width / 2
+  self.objetivoX = math.max(0, math.min(ancho - self.width, x))
+
+end
+
 
 function VendingMachine:throwAttack()
 
-    print("Esta haciendo el ataque de lanzamiento")
-self:terminarAtaque()
+  local x = self.position.x + self.width / 2
+  local y = self.position.y + self.height / 2
+
+  local targetX = self.character.position.x + self.character.width * self.character.scale.x / 2
+  local targetY = self.character.position.y + self.character.height * self.character.scale.y / 2
+
+
+  local proyectil = Proyectil(x, y, targetX, targetY)
+
+  table.insert(proyectiles, proyectil)
+  self:terminarAtaque()
 end
 
 

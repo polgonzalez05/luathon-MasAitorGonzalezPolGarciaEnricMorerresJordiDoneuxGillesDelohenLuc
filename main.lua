@@ -7,9 +7,13 @@ local Character = Character or require "src/character"
 actorList = {}
 
 function love.load()
+
+  proyectiles = {}
+
   local character = Character()
-  table.insert(actorList, character)
   local vendingMachine = VendingMachine(character)
+
+  table.insert(actorList, character)
   table.insert(actorList, vendingMachine)
   
 end
@@ -17,6 +21,10 @@ end
 function love.update(dt)
   for _, actor in ipairs(actorList) do
     actor:update(dt)
+  end
+
+  for _, proyectil in ipairs(proyectiles) do
+    proyectil:update(dt)
   end
   
   if (love.keyboard.isDown("escape")) then
@@ -27,5 +35,9 @@ end
 function love.draw()
   for _, actor in ipairs(actorList) do
     actor:draw()
+  end
+
+  for _, proyectil in ipairs(proyectiles) do
+    proyectil:draw()
   end
 end
