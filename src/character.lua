@@ -8,8 +8,8 @@ function Character:new()
     self.scale = Vector(1.5, 1.5)
 
     self.speed = 200
-    self.gravity = 900
-    self.jumpSpeed = -450
+    self.gravity = 2000
+    self.jumpSpeed = -850
     self.velocityY = 0
     self.groundY = 320
     

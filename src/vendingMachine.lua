@@ -1,10 +1,11 @@
 local AnimatedActor = AnimatedActor or require "lib/animatedActor"
 local Vector = Vector or require "lib/vector"
 local StateMachine = StateMachine or require "lib/FSM/StateMachine"
+--local Proyectil = Proyectil or require "src/proyectil"
 
 local VendingMachine = AnimatedActor:extend()
 
-function VendingMachine:new()
+function VendingMachine:new(character)
   VendingMachine.super.new(self, "src/textures/vendingMachineSpritesheet.png", 200, 250, 8, 0, 0, 24, 12)
 
 
@@ -12,7 +13,6 @@ function VendingMachine:new()
 
   self.maxT = 2
   self.minT = 0.3
-
   self.ataqueTerminado = false
 
   self.probabilidadIdle = 30
