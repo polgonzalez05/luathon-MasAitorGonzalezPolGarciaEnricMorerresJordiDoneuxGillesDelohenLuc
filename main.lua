@@ -1,24 +1,31 @@
-local Character = require "src/character"
-local player
+
+local Vector = Vector or require "lib/vector"
+local Actor = Actor or require "lib/actor"
+
+local VendingMachine = VendingMachine or require "src/vendingMachine"
+local Character = Character or require "src/character"
+
+actorList = {}
 
 function love.load()
-    player = Character()
+  local vendingMachine = VendingMachine()
+  table.insert(actorList, vendingMachine)
+  character = Character()
+  table.insert(actorList, character)
 end
 
 function love.update(dt)
-    if love.keyboard.isDown("escape") then
-        love.event.quit()
-    end
-
-    player:update(dt)
+  for _, actor in ipairs(actorList) do
+    actor:update(dt)
+  end
+  
+  if (love.keyboard.isDown("escape")) then
+    love.event.quit()
+  end
 end
 
 function love.draw()
-    player:draw()
-end
-
-function love.keypressed(key)
-    if key == "space" then
-        player:jump()
-    end
+  for _, actor in ipairs(actorList) do
+    actor:draw()
+  end
 end

@@ -1,44 +1,52 @@
-local Actor = Actor or require "lib/actor"
+local AnimatedActor = AnimatedActor or require "lib/animatedActor"
+local Vector = Vector or require "lib/vector"
 
-local Character = Actor:extend()
+local Character = AnimatedActor:extend()
 
 function Character:new()
-    self.image = love.graphics.newImage("src/textures/idle/char-idle-0.png")
-    self.pos = { x = 180, y = 540 }
+    Character.super.new(self, "src/textures/idle/char-idle-0.png", 300, 200, 1, 0, 0, 1, 1)
+    self.scale = Vector(1.5, 1.5)
 
     self.speed = 200
     self.gravity = 900
     self.jumpSpeed = -450
     self.velocityY = 0
-    self.groundY = 540
+    self.groundY = 320
     
 end
 
 
 function Character:update(dt)
     if love.keyboard.isDown("a") then
-        self.pos.x = self.pos.x - self.speed * dt
+        self.position.x = self.position.x - self.speed * dt
     end
 
     if love.keyboard.isDown("d") then
-        self.pos.x = self.pos.x + self.speed * dt
+        self.position.x = self.position.x + self.speed * dt
     end
 
-    self.velocityY = self.velocityY + self.gravity * dt
-    self.pos.y = self.pos.y + self.velocityY * dt
+    if love.keyboard.isDown("space") then
+        if (self.position.y >= self.groundY) then
+            self.velocityY = self.jumpSpeed
+        end
+    end
 
-    if self.pos.y >= self.groundY then
-        self.pos.y = self.groundY
+
+    self.velocityY = self.velocityY + self.gravity * dt
+    self.position.y = self.position.y + self.velocityY * dt
+
+    if self.position.y >= self.groundY then
+        self.position.y = self.groundY
         self.velocityY = 0
     end
 end
 
 function Character:draw()
-    love.graphics.draw(self.image, self.pos.x, self.pos.y)
+    Character.super.draw(self)
 end
 
 function Character:jump()
-    if self.pos.y >= self.groundY then
+    if self.position.y >= self.groundY then
         self.velocityY = self.jumpSpeed
     end
 end

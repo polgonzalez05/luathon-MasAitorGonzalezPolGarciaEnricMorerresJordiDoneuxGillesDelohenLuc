@@ -1,6 +1,6 @@
 function love.conf(t)
-  t.window.width = 960 
-  t.window.height = 960
+  t.window.width = 1000
+  t.window.height = 500
   t.console = true
-  t.title = "Beyond The Out Of Order"
+  t.title = "LUATHON"
 end
