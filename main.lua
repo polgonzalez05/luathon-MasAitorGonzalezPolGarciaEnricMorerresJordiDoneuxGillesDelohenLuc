@@ -4,6 +4,7 @@ local Actor = Actor or require "lib/actor"
 
 local VendingMachine = VendingMachine or require "src/vendingMachine"
 local Character = Character or require "src/character"
+local Hud = Hud or require "src/hud"
 
 actorList = {}
 
@@ -17,6 +18,10 @@ function love.load()
   table.insert(actorList, character)
   table.insert(actorList, vendingMachine)
   
+  hud = Hud(vendingMachine)
+
+  table.insert(actorList, hud)
+
 end
 
 function love.update(dt)

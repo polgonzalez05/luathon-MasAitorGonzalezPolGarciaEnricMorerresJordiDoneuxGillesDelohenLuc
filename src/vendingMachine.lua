@@ -44,6 +44,10 @@ function VendingMachine:new(character)
     "barrido"
   }
 
+  self.vidaMax = 100
+  self.vida = self.vidaMax
+  self.vivo = true
+
   bossState = StateMachine()
 
   bossState:addState("idle", 
@@ -252,7 +256,9 @@ function VendingMachine:update(dt)
     end
   end
   
-
+  if love.keyboard.isDown("k") then
+    actorList[2]:restarVida(20 * dt)
+  end
   bossState:tick(dt)
 
 end
@@ -352,6 +358,14 @@ function VendingMachine:barridoAttack()
 
   self.faseBarrido = "buscarBorde"
 
+end
+
+function VendingMachine:restarVida(value)
+  self.vida = math.max(0, self.vida - value)
+
+  if (self.vida <= 0) then
+    self.vivo = false
+  end
 end
 
 return VendingMachine
