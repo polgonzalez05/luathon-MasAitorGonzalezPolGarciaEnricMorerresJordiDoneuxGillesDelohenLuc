@@ -3,7 +3,7 @@ local Level = require "src/level"
 local level
 
 function love.load()
-  level = Level("src/mapa.lua")
+  level = Level()
 end
 
 function love.update(dt)

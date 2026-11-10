@@ -7,8 +7,8 @@ local Background = require "src/background"
 
 local Level = Object:extend()
 
-function Level:new(mapPath)
-  self.map = Sti(mapPath)
+function Level:new()
+  self.map = Sti("src/mapa.lua")
 
   self.actors = {}
   self.character = Character()
