@@ -9,7 +9,7 @@ actorList = {}
 function love.load()
   local vendingMachine = VendingMachine()
   table.insert(actorList, vendingMachine)
-  local character = Character()
+  character = Character()
   table.insert(actorList, character)
 end
 

@@ -25,6 +25,13 @@ function Character:update(dt)
         self.position.x = self.position.x + self.speed * dt
     end
 
+    if love.keyboard.isDown("space") then
+        if (self.position.y >= self.groundY) then
+            self.velocityY = self.jumpSpeed
+        end
+    end
+
+
     self.velocityY = self.velocityY + self.gravity * dt
     self.position.y = self.position.y + self.velocityY * dt
 
