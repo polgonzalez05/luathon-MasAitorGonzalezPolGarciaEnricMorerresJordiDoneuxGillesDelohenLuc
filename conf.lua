@@ -1,6 +1,7 @@
 function love.conf(t)
-  t.window.width = 1000
-  t.window.height = 500
+  t.window.fullscreen = true
+  --t.window.width = 1000
+  --t.window.height = 500
   t.console = true
   t.title = "LUATHON"
 end

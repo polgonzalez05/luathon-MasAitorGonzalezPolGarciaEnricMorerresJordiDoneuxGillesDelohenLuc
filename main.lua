@@ -1,31 +1,19 @@
-local Vector = Vector or require "lib/vector"
-local Actor = Actor or require "lib/actor"
+local Level = require "src/level"
 
-local VendingMachine = VendingMachine or require "src/vendingMachine"
-local Character = Character or require "src/character"
-
-actorList = {}
+local level
 
 function love.load()
-  local character = Character()
-  table.insert(actorList, character)
-  local vendingMachine = VendingMachine(character)
-  table.insert(actorList, vendingMachine)
-  
+  level = Level("src/mapa.lua")
 end
 
 function love.update(dt)
-  for _, actor in ipairs(actorList) do
-    actor:update(dt)
-  end
-  
-  if (love.keyboard.isDown("escape")) then
-    love.event.quit()
-  end
+  level:update(dt)
 end
 
 function love.draw()
-  for _, actor in ipairs(actorList) do
-    actor:draw()
-  end
+  level:draw()
+end
+
+function love.resize(w, h)
+  level:resize(w, h)
 end

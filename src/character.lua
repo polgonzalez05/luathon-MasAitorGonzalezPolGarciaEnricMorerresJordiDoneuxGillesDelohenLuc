@@ -4,14 +4,14 @@ local Vector = Vector or require "lib/vector"
 local Character = AnimatedActor:extend()
 
 function Character:new()
-    Character.super.new(self, "src/textures/idle/char-idle-0.png", 300, 200, 1, 0, 0, 1, 1)
+    Character.super.new(self, "src/textures/idle/char-idle-0.png", 150, 2944, 1, 0, 0, 1, 1)
     self.scale = Vector(1.5, 1.5)
 
     self.speed = 200
     self.gravity = 2000
     self.jumpSpeed = -850
     self.velocityY = 0
-    self.groundY = 320
+    self.groundY = 2944
     
 end
 
