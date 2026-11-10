@@ -23,17 +23,18 @@ function AnimatedActor:new(_image, _x, _y, _speed,_fx,_fy,_nFrames,_fr)
   end
 end
 function AnimatedActor:update(dt)
-    if self.actFrame <= self.nFrames then
-        self.actFrame = self.actFrame + self.frameRate*dt
-      else
-        self.actFrame =1
-    end
-    self.position = self.position + self.forward * self.speed * dt
+  self.actFrame = self.actFrame + self.frameRate * dt
+
+  if self.actFrame > self.nFrames then
+    self.actFrame = 1
+  end
+
+  self.position = self.position + self.forward * self.speed * dt
 end
 
 function AnimatedActor:draw()
   local i = math.floor(self.actFrame)
-  love.graphics.draw(self.image,self.frames[i],self.position.x,self.position.y,self.rot)
+  love.graphics.draw(self.image,self.frames[i],self.position.x + self.origin.x,self.position.y + self.origin.y,self.rot, self.scale.x, self.scale.y, self.origin.x, self.origin.y)
 end
 
 
