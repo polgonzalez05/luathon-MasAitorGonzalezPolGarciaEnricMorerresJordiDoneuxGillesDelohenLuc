@@ -6,7 +6,7 @@ local Proyectil = Proyectil or require "src/proyectil"
 local VendingMachine = AnimatedActor:extend()
 
 function VendingMachine:new(character)
-  VendingMachine.super.new(self, "src/textures/vendingMachineSpritesheet.png", 480, 458, 8, 0, 0, 24, 12)
+  VendingMachine.super.new(self, "src/textures/boss/vendingMachineSpritesheet.png", 480, 458, 8, 0, 0, 24, 12)
 
   self.proyectiles = {}
   
@@ -54,6 +54,8 @@ function VendingMachine:new(character)
 
   self.hitboxOffsetX = 35
   self.hitboxOffsetY = 10
+
+  self.repeticionesAereo = 0
 
   bossState = StateMachine()
 
@@ -106,6 +108,7 @@ function VendingMachine:new(character)
   bossState:addState("aereal", 
   {
     enter = function()
+      self.repeticionesAereo = love.math.random(1, 5)
         self:aerealAttack()
     end,
 
@@ -260,7 +263,13 @@ function VendingMachine:update(dt)
         soundManager:setVolume("stomp", 0.2)
         if (self.position.y >= self.sueloY) then
           self.position.y = self.sueloY
-          self:terminarAtaque()
+          self.repeticionesAereo = self.repeticionesAereo - 1
+
+          if (self.repeticionesAereo > 0) then
+            self:aerealAttack()
+          else
+            self:terminarAtaque()
+          end
         end
       end
     end
@@ -362,12 +371,12 @@ end
 function VendingMachine:barridoAttack()
   print("Esta haciendo el ataque de barrido")
 
-  local ancho = love.graphics.getWidth()
+  local ancho = 1088
 
   if (self.position.x < 0) then
     self.position.x = 0
   elseif (self.position.x + self.width > ancho) then
-    self.position.x = ancho -self.width
+    self.position.x = ancho - self.width
   end
 
   local dI = self.position.x
@@ -376,13 +385,18 @@ function VendingMachine:barridoAttack()
   self.speed = self.velocidadBarrido
   self.rot = 0
 
-  if (dI < dD) then
+  if (dI <= 5) then
+    self.forward = Vector(1, 0)
+    self.rot = 0.12
+    self.faseBarrido = "barrer"
+  elseif (dD <= 5) then
     self.forward = Vector(-1, 0)
+    self.faseBarrido = "buscarBorde"
+
   else
     self.forward = Vector(1, 0)
+    self.faseBarrido = "buscarBorde"
   end
-
-  self.faseBarrido = "buscarBorde"
 
 end
 

@@ -2,9 +2,10 @@ local Object = Object or require "lib/classic"
 
 local Hud = Object:extend()
 
-function Hud:new(boss)
+function Hud:new(boss, character)
 
     self.boss = boss
+    self.character = character
 
     self.barraAncho = 600
     self.barraAlto = 24
@@ -19,6 +20,13 @@ function Hud:new(boss)
 end
 
 function Hud:update(dt)
+
+    self.imagenVida = love.graphics.newImage("src/textures/hud/vida.png")
+    self.imagenVida:setFilter("linear", "linear")
+    self.vidaX = 40
+    self.vidaY = 40
+    self.espacioVida = 10
+    self.tamañoVida = 80
 
     local vida = self.boss.vida
 
@@ -41,7 +49,7 @@ end
 function Hud:draw()
     local ancho = 1920
     local alto = 1080
-    
+
     local x = (ancho - self.barraAncho) / 2
     local y = alto - self.margenAbajo - self.barraAlto
 
@@ -61,6 +69,10 @@ function Hud:draw()
     love.graphics.print("VENDING MACHINE", x, y - 22)
 
     love.graphics.setColor(1,1,1,1)
+
+    for i=1, self.character.vida do
+        love.graphics.draw(self.imagenVida, self.vidaX + (i - 1) * (self.tamañoVida + self.espacioVida), self.vidaY, 0, self.tamañoVida / self.imagenVida:getWidth(), self.tamañoVida / self.imagenVida:getHeight())
+    end
 end
 
 return Hud

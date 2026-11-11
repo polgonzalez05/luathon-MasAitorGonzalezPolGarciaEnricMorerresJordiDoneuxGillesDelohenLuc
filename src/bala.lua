@@ -4,7 +4,7 @@ local Vector = require "lib/vector"
 local Bala = AnimatedActor:extend()
 
 function Bala:new(x, y, targetX, targetY)
-    Bala.super.new(self, "src/textures/projectile/projectile1.png", x, y, 1, 0, 0, 1, 1)
+    Bala.super.new(self, "src/textures/player/projectile/projectile1.png", x, y, 1, 0, 0, 1, 1)
 
     self.scale = Vector(1, 1)
     
