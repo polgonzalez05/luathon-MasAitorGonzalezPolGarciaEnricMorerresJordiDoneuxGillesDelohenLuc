@@ -5,7 +5,7 @@ local Bala = require "src/bala"
 local Character = AnimatedActor:extend()
 
 function Character:new(boss)
-    Character.super.new(self, "src/textures/player/idle/idle.png", 490, 500, 8, 0, 0, 4, 1)
+    Character.super.new(self, "src/textures/player/idle/idle.png", 700, 500, 8, 0, 0, 4, 1)
 
     self.animations = {
         idle = {"src/textures/player/idle/idle.png", 4, 8, true},
@@ -193,7 +193,7 @@ function Character:recibirDaño(n)
     end
     soundManager:play("hurt")
     self.vida = self.vida - n
-    self.parpadeo = 0.3
+    self.parpadeo = self.dañoCooldown
     self.tCooldown = self.dañoCooldown
 
     if (self.vida <= 0) then
