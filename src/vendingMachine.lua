@@ -8,6 +8,8 @@ local VendingMachine = AnimatedActor:extend()
 function VendingMachine:new(character)
   VendingMachine.super.new(self, "src/textures/vendingMachineSpritesheet.png", 200, 250, 8, 0, 0, 24, 12)
 
+  self.proyectiles = {}
+  
   self.character = character
 
   self.espera = love.math.random(30, 200) / 100
@@ -44,9 +46,14 @@ function VendingMachine:new(character)
     "barrido"
   }
 
+  self.scale = Vector(1,1)
+
   self.vidaMax = 1000
   self.vida = self.vidaMax
   self.vivo = true
+
+  self.hitboxOffsetX = 35
+  self.hitboxOffsetY = 10
 
   bossState = StateMachine()
 
@@ -259,12 +266,28 @@ function VendingMachine:update(dt)
   if love.keyboard.isDown("k") then
     actorList[2]:restarVida(20 * dt)
   end
+
+  for i = #self.proyectiles, 1, -1 do
+    self.proyectiles [i]:update(dt)
+    if (self.proyectiles[i]:checkCollision(self.character)) then
+      self.character:recibirDaño(1)
+      table.remove(self.proyectiles, i)
+
+    elseif (self.proyectiles[i].position.y > love.graphics.getHeight() + 100) then
+      table.remove(self.proyectiles, i)
+    end
+  end
+
   bossState:tick(dt)
 
 end
 
 function VendingMachine:draw()
     VendingMachine.super.draw(self)
+
+    for _, proyectil in ipairs(self.proyectiles) do
+      proyectil:draw()
+    end
 end
 
 function VendingMachine:elegirAtaque()
@@ -328,7 +351,7 @@ function VendingMachine:throwAttack()
 
   local proyectil = Proyectil(x, y, targetX, targetY)
 
-  table.insert(proyectiles, proyectil)
+  table.insert(self.proyectiles, proyectil)
   self:terminarAtaque()
 end
 

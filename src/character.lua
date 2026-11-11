@@ -18,7 +18,7 @@ function Character:new(boss)
 
     self.currentAnimation = ""
 
-    self.setCharacterAnimation("idle")
+    self:setCharacterAnimation("idle")
 
     self.boss = boss
     self.daño = 15
@@ -29,7 +29,7 @@ function Character:new(boss)
     self.gravity = 2500
     self.jumpSpeed = -750
     self.velocityY = 0
-    self.groundY = 320
+    self.groundY = 300
 
     self.maxJumpHold = 0.25
     self.jumpHoldTime = 0
@@ -53,6 +53,9 @@ function Character:new(boss)
 
     self.wasInAir = false
     self.shootTimer = 0
+
+    self.hitboxOffsetX = 30
+    self.hitboxOffsetY = 20
 end
 
 
@@ -131,9 +134,10 @@ function Character:update(dt)
     for i = #self.projectiles, 1, -1 do
         self.projectiles[i]:update(dt)
 
-
         if (self.projectiles[i]:checkCollision(self.boss)) then
+            print("BALA HA IMPACTADO")
             self.boss:restarVida(self.daño)
+            print("VIDA DEL BOSS: " .. self.boss.vida)
             table.remove(self.projectiles, i)
 
         elseif (self.projectiles[i].position.x <= -100 or self.projectiles[i].position.x > love.graphics.getWidth() + 100) then
@@ -143,15 +147,8 @@ function Character:update(dt)
 
     self.tCooldown = math.max(0, self.tCooldown - dt)
 
-    if (self:checkCollision(self.boss) and self.tCooldown <= 0) then
-        self.vida = self.vida - 1
-        self.parpadeo = 0.3
-        self.tCooldown = self.dañoCooldown 
-
-        if (self.vida == 0) then
-            self.alive = false
-            print ("MUERTO")
-        end
+    if (self:checkCollision(self.boss)) then
+        self:recibirDaño(1)
     end
 
     self.parpadeo = math.max(0, self.parpadeo - dt)
@@ -160,14 +157,10 @@ function Character:update(dt)
 end
 
 function Character:shoot()
-    local offsetX = 3
-
-    if (self.facing == -1) then
-        offsetX = -3
-    end
+    local offsetX = 30
 
     local x = self.position.x + offsetX * self.scale.x
-    local y = self.position.y + 10 * self.scale.y
+    local y = self.position.y + 36 * self.scale.y
 
     local targetX = x + self.facing * 1000
     local targetY = y
@@ -194,17 +187,39 @@ function Character:jump()
     end
 end
 
+function Character:recibirDaño(n)
+    if(self.tCooldown > 0 or not self.alive) then
+        return
+    end
+
+    self.vida = self.vida - n
+    self.parpadeo = 0.3
+    self.tCooldown = self.dañoCooldown
+
+    if (self.vida <= 0) then
+        self.vida = 0
+        self.alive = false
+        print("MUERTO")
+    end
+end
+
 
 function Character:draw()
-    local drawX = self.position.x
+    local drawX = self.position.x + self.origin.x * self.scale.x
+    local drawY = self.position.y + self.origin.y * self.scale.y
 
     if (self.parpadeo > 0 and math.floor(self.parpadeo * 8) % 2 == 0) then
-        love.graphics.setColor(1, 1, 1, 0)
+        love.graphics.setColor(1,1,1,0)
     else
         love.graphics.setColor(1,1,1,1)
     end
 
-    love.graphics.draw(self.image, self.frames[math.floor(self.actFrame)], drawX, self.position.y, 0, self.scale.x * self.facing, self.scale.y, self.facing == -1 and self.width - self.origin.x or self.origin.x, self.origin.y)
+
+    love.graphics.draw(self.image, self.frames[math.floor(self.actFrame)],
+        drawX, drawY, 0,
+        self.scale.x * self.facing, self.scale.y,
+        self.facing == -1 and self.width - self.origin.x or self.origin.x,
+        self.origin.y)
 
     love.graphics.setColor(1,1,1,1)
 
