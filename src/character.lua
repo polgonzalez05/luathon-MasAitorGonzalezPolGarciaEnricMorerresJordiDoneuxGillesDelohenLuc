@@ -28,7 +28,7 @@ function Character:new(boss)
     self.gravity = 2500
     self.jumpSpeed = -750
     self.velocityY = 0
-    self.groundY = 300
+    self.groundY = 500
 
     self.maxJumpHold = 0.25
     self.jumpHoldTime = 0
@@ -64,17 +64,16 @@ function Character:update(dt)
         return
     end
 
-
     local spaceDown = love.keyboard.isDown("space")
     local moving = false
 
-    if (love.keyboard.isDown("a")) then
+    if (love.keyboard.isDown("a") and self.position.x>= 0) then
         self.position.x = self.position.x - self.speed * dt
         self.facing = -1
         moving = true
     end
 
-    if (love.keyboard.isDown("d")) then
+    if (love.keyboard.isDown("d") and self.position.x<= 992) then
         self.position.x = self.position.x + self.speed * dt
         self.facing = 1
         moving = true
@@ -139,7 +138,7 @@ function Character:update(dt)
             print("VIDA DEL BOSS: " .. self.boss.vida)
             table.remove(self.projectiles, i)
 
-        elseif (self.projectiles[i].position.x <= -100 or self.projectiles[i].position.x > love.graphics.getWidth() + 100) then
+        elseif (self.projectiles[i].position.x <= 30 or self.projectiles[i].position.x > 1050) then
             table.remove(self.projectiles, i)
         end
     end
@@ -156,6 +155,7 @@ function Character:update(dt)
 end
 
 function Character:shoot()
+    soundManager:play("shoot")
     local offsetX = 30
 
     local x = self.position.x + offsetX * self.scale.x
@@ -180,6 +180,7 @@ function Character:setCharacterAnimation(name)
 end
 
 function Character:jump()
+    soundManager:play("jump")
     if self.position.y >= self.groundY then
         self.velocityY = self.jumpSpeed
         self.jumpHoldTime = 0
@@ -190,7 +191,7 @@ function Character:recibirDaño(n)
     if(self.tCooldown > 0 or not self.alive) then
         return
     end
-
+    soundManager:play("hurt")
     self.vida = self.vida - n
     self.parpadeo = 0.3
     self.tCooldown = self.dañoCooldown

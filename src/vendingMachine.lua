@@ -218,13 +218,15 @@ function VendingMachine:update(dt)
         end
 
       elseif (self.faseBarrido == "barrer") then
-
+        soundManager:setVolume("arrastre", 0.3)
+        soundManager:playLoop("arrastre")
         if (self.forward.x > 0 and self.position.x + self.width >= ancho) then
           self.position.x = ancho - self.width
           self:terminarAtaque()
-
+          soundManager:setVolume("arrastre", 0)
         elseif (self.forward.x < 0 and self.position.x <= 0) then
           self.position.x = 0
+          soundManager:setVolume("arrastre", 0)
           self:terminarAtaque()
         end
 
@@ -254,7 +256,8 @@ function VendingMachine:update(dt)
         end
       elseif (self.faseAereo == "caer") then
         self.position.y = self.position.y + self.velocidadCaida * dt
-        
+        soundManager:play("stomp")
+        soundManager:setVolume("stomp", 0.2)
         if (self.position.y >= self.sueloY) then
           self.position.y = self.sueloY
           self:terminarAtaque()
@@ -348,7 +351,7 @@ function VendingMachine:throwAttack()
   local targetX = self.character.position.x + self.character.width * self.character.scale.x / 2
   local targetY = self.character.position.y + self.character.height * self.character.scale.y / 2
 
-
+  soundManager:play("chips")
   local proyectil = Proyectil(x, y, targetX, targetY)
 
   table.insert(self.proyectiles, proyectil)

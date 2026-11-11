@@ -39,9 +39,9 @@ function Hud:update(dt)
 end
 
 function Hud:draw()
-    local ancho = love.graphics.getWidth()
-    local alto = love.graphics.getHeight()
-
+    local ancho = 1920
+    local alto = 1080
+    
     local x = (ancho - self.barraAncho) / 2
     local y = alto - self.margenAbajo - self.barraAlto
 
