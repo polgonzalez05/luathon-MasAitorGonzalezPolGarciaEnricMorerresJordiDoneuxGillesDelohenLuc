@@ -1,23 +1,26 @@
 local AnimatedActor = AnimatedActor or require "lib/animatedActor"
 local Vector = Vector or require "lib/vector"
 local StateMachine = StateMachine or require "lib/FSM/StateMachine"
+local Proyectil = Proyectil or require "src/proyectil"
 
 local VendingMachine = AnimatedActor:extend()
 
-function VendingMachine:new()
-  VendingMachine.super.new(self, "src/textures/vendingMachineSpritesheet.png", 200, 250, 8, 0, 0, 24, 12)
+function VendingMachine:new(character)
+  VendingMachine.super.new(self, "src/textures/boss/vendingMachineSpritesheet.png", 480, 458, 8, 0, 0, 24, 12)
 
+  self.proyectiles = {}
+  
+  self.character = character
 
   self.espera = love.math.random(30, 200) / 100
 
   self.maxT = 2
   self.minT = 0.3
-
   self.ataqueTerminado = false
 
   self.probabilidadIdle = 30
   self.probabilidadWalk = 30
-  self.probabilidadAttack = 40
+  self.probabilidadAttack = 40 
 
   self.velocidadBarrido = 500
   self.faseBarrido = ""
@@ -25,11 +28,34 @@ function VendingMachine:new()
   self.esperaP = 0.6
   self.tiempoP = 0
 
+  self.sueloY = self.position.y
+  self.faseAereo = ""
+
+  self.alturaAerea = 250
+  self.velocidadVuelo = 700
+  self.velocidadCaida = 1400
+  self.esperaAereo = 0.5
+  self.tiempoAereo = 0
+  self.rangoAereo = 80
+  self.objetivoX = 0
+  self.objetivoY = 0
+
   self.ataques = {
     "aereal",
     "throw",
     "barrido"
   }
+
+  self.scale = Vector(1,1)
+
+  self.vidaMax = 1000
+  self.vida = self.vidaMax
+  self.vivo = true
+
+  self.hitboxOffsetX = 35
+  self.hitboxOffsetY = 10
+
+  self.repeticionesAereo = 0
 
   bossState = StateMachine()
 
@@ -82,11 +108,11 @@ function VendingMachine:new()
   bossState:addState("aereal", 
   {
     enter = function()
+      self.repeticionesAereo = love.math.random(1, 5)
         self:aerealAttack()
     end,
 
     exit = function()
-        self:terminarAtaque()
     end,
 
     from = {"moving", "idle", "aereal", "throw", "barrido"},
@@ -102,7 +128,6 @@ function VendingMachine:new()
     end,
 
     exit = function()
-        self:terminarAtaque()
     end,
 
     from = {"moving", "idle", "aereal", "throw", "barrido"},
@@ -168,7 +193,7 @@ function VendingMachine:update(dt)
 
     elseif (estado == "barrido") then
 
-      local ancho = love.graphics.getWidth()
+      local ancho = 1088
 
       if (self.faseBarrido == "buscarBorde") then
 
@@ -196,17 +221,72 @@ function VendingMachine:update(dt)
         end
 
       elseif (self.faseBarrido == "barrer") then
-
+        soundManager:setVolume("arrastre", 0.3)
+        soundManager:playLoop("arrastre")
         if (self.forward.x > 0 and self.position.x + self.width >= ancho) then
           self.position.x = ancho - self.width
           self:terminarAtaque()
-
+          soundManager:setVolume("arrastre", 0)
         elseif (self.forward.x < 0 and self.position.x <= 0) then
           self.position.x = 0
+          soundManager:setVolume("arrastre", 0)
           self:terminarAtaque()
         end
 
       end
+    elseif (estado == "aereal") then
+      if (self.faseAereo == "volar") then
+        local dx = self.objetivoX - self.position.x
+        local dy = self.objetivoY - self.position.y
+        local dist = math.sqrt(dx * dx + dy * dy)
+        local paso = self.velocidadVuelo * dt
+
+        if (dist <= paso) then
+          self.position.x = self.objetivoX
+          self.position.y = self.objetivoY
+          self.tiempoAereo = self.esperaAereo
+          self.faseAereo = "esperar"
+        else
+          self.position.x = self.position.x + dx / dist * paso
+          self.position.y = self.position.y + dy / dist * paso
+        end
+
+      elseif (self.faseAereo == "esperar") then
+        self.tiempoAereo = self.tiempoAereo - dt
+        
+        if (self.tiempoAereo <= 0) then
+          self.faseAereo = "caer"
+        end
+      elseif (self.faseAereo == "caer") then
+        self.position.y = self.position.y + self.velocidadCaida * dt
+        soundManager:play("stomp")
+        soundManager:setVolume("stomp", 0.2)
+        if (self.position.y >= self.sueloY) then
+          self.position.y = self.sueloY
+          self.repeticionesAereo = self.repeticionesAereo - 1
+
+          if (self.repeticionesAereo > 0) then
+            self:aerealAttack()
+          else
+            self:terminarAtaque()
+          end
+        end
+      end
+    end
+  end
+  
+  if love.keyboard.isDown("k") then
+    actorList[2]:restarVida(20 * dt)
+  end
+
+  for i = #self.proyectiles, 1, -1 do
+    self.proyectiles [i]:update(dt)
+    if (self.proyectiles[i]:checkCollision(self.character)) then
+      self.character:recibirDaño(1)
+      table.remove(self.proyectiles, i)
+
+    elseif (self.proyectiles[i].position.y > love.graphics.getHeight() + 100) then
+      table.remove(self.proyectiles, i)
     end
   end
 
@@ -216,6 +296,10 @@ end
 
 function VendingMachine:draw()
     VendingMachine.super.draw(self)
+
+    for _, proyectil in ipairs(self.proyectiles) do
+      proyectil:draw()
+    end
 end
 
 function VendingMachine:elegirAtaque()
@@ -241,30 +325,58 @@ function VendingMachine:terminarAtaque()
   self.speed = 0
   self.rot = 0
   self.faseBarrido = ""
+  self.faseAereo = ""
   self.ataqueTerminado = true
 end
 
 function VendingMachine:aerealAttack()
     print("esta haciendo un ataque aereo")
-    self:terminarAtaque()
+
+    self.speed = 0
+    self.rot = 0
+    self.objetivoY = math.max(0, self.sueloY - self.alturaAerea)
+    self:elegirObjetivoAereo()
+    self.faseAereo = "volar"
 end
+
+function VendingMachine:elegirObjetivoAereo()
+  local ancho = love.graphics.getWidth()
+  local c = self.character
+
+  local centroJugador = c.position.x + c.width * c.scale.x / 2
+  local offset = love.math.random(-self.rangoAereo, self.rangoAereo)
+
+  local x = centroJugador + offset - self.width / 2
+  self.objetivoX = math.max(0, math.min(ancho - self.width, x))
+
+end
+
 
 function VendingMachine:throwAttack()
 
-    print("Esta haciendo el ataque de lanzamiento")
-self:terminarAtaque()
+  local x = self.position.x + self.width / 2
+  local y = self.position.y + self.height / 2
+
+  local targetX = self.character.position.x + self.character.width * self.character.scale.x / 2
+  local targetY = self.character.position.y + self.character.height * self.character.scale.y / 2
+
+  soundManager:play("chips")
+  local proyectil = Proyectil(x, y, targetX, targetY)
+
+  table.insert(self.proyectiles, proyectil)
+  self:terminarAtaque()
 end
 
 
 function VendingMachine:barridoAttack()
   print("Esta haciendo el ataque de barrido")
 
-  local ancho = love.graphics.getWidth()
+  local ancho = 1088
 
   if (self.position.x < 0) then
     self.position.x = 0
   elseif (self.position.x + self.width > ancho) then
-    self.position.x = ancho -self.width
+    self.position.x = ancho - self.width
   end
 
   local dI = self.position.x
@@ -273,14 +385,27 @@ function VendingMachine:barridoAttack()
   self.speed = self.velocidadBarrido
   self.rot = 0
 
-  if (dI < dD) then
+  if (dI <= 5) then
+    self.forward = Vector(1, 0)
+    self.rot = 0.12
+    self.faseBarrido = "barrer"
+  elseif (dD <= 5) then
     self.forward = Vector(-1, 0)
+    self.faseBarrido = "buscarBorde"
+
   else
     self.forward = Vector(1, 0)
+    self.faseBarrido = "buscarBorde"
   end
 
-  self.faseBarrido = "buscarBorde"
+end
 
+function VendingMachine:restarVida(value)
+  self.vida = math.max(0, self.vida - value)
+
+  if (self.vida <= 0) then
+    self.vivo = false
+  end
 end
 
 return VendingMachine
