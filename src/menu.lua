@@ -18,7 +18,7 @@ local function botones()
     local ancho = 300
     local alto = 68
     local x = (ANCHO - ancho) / 2
-    local y = ALTO * 0.5
+    local y = ALTO * 0.64
 
     return {
         jugar = { x = x, y = y, w = ancho, h = alto },
