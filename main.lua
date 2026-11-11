@@ -1,38 +1,86 @@
+local Menu = require "src/menu"
 local Level = require "src/level"
+local EndScreen = require "src/endScreen"
 
+local menu
 local level
-
-local virtualWidth = 1920
-local virtualHeight = 1080
-
-local canvas
+local endScreen
+local screen = "menu"
 
 function love.load()
-  canvas = love.graphics.newCanvas(virtualWidth, virtualHeight)
-  level = Level()
+    menu = Menu:new()
 end
 
 function love.update(dt)
-  level:update(dt)
+    if screen == "game" then
+        level:update(dt)
+
+        if not level.character.alive then
+            endScreen = EndScreen:new("muerte")
+            screen = "end"
+        elseif not level.vendingMachine.vivo then
+            endScreen = EndScreen:new("victoria")
+            screen = "end"
+        end
+            elseif screen == "end" then
+        endScreen:update(dt)
+    end
 end
 
 function love.draw()
-  love.graphics.setCanvas(canvas)
-  love.graphics.clear()
-  level:draw()
+    if screen == "menu" then
+        menu:draw()
+    elseif screen == "game" then
+        level:draw()
+    elseif screen == "end" then
+        level:draw()
+        endScreen:draw()
+    end
+end
 
-  love.graphics.setCanvas()
+local function handleMenuAction(action)
+    if action == "jugar" then
+        level = Level()
+        menu = nil
+        screen = "game"
+    elseif action == "salir" then
+        love.event.quit()
+    end
+end
 
-  local sw, sh = love.graphics.getDimensions()
+local function handleEndAction(action)
+    if action == "retry" then
+      level = Level()
+      endScreen = nil
+      screen = "game"
+    elseif action == "menu" then
+        level = nil
+        endScreen = nil
+        menu = Menu:new()
+        screen = "menu"
+    elseif action == "salir" then
+        love.event.quit()
+    end
+end
 
-  local scale = math.min(sw / virtualWidth, sh / virtualHeight)
+function love.mousepressed(x, y, button)
+    if screen == "menu" then
+        handleMenuAction(menu:mousepressed(x, y, button))
+    elseif screen == "end" then
+        handleEndAction(endScreen:mousepressed(x, y, button))
+    end
+end
 
-  local x = (sw - virtualWidth * scale) / 2
-  local y = (sh - virtualHeight * scale) / 2
-
-  love.graphics.draw(canvas, x, y, 0, scale, scale)
+function love.keypressed(key)
+    if screen == "menu" then
+        handleMenuAction(menu:keypressed(key))
+    elseif screen == "end" then
+        handleEndAction(endScreen:keypressed(key))
+    end
 end
 
 function love.resize(w, h)
-  level:resize(w, h)
+    if level then
+        level:resize(w, h)
+    end
 end

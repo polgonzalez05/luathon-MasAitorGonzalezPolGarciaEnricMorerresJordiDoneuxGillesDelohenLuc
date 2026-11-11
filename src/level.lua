@@ -44,7 +44,7 @@ function Level:update(dt)
   end
 
   self.map:update(dt)
-  self.camera:update(dt)        -- despues de mover a los actores
+  self.camera:update(dt)        
 
   self.hud:update(dt)
   if love.keyboard.isDown("escape") then

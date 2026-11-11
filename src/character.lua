@@ -21,14 +21,23 @@ function Character:new(boss)
     self:setCharacterAnimation("idle")
 
     self.boss = boss
-    self.daño = 15
+    self.daño = 1511 -- Daño BALAS
     self.scale = Vector(1.5, 1.5)
 
+    -- Spawn Incio
+    -- local sueloY = 99 * 32
+    -- self.position.x = (34 * 32 - self.width * self.scale.x) / 2
+    -- self.position.y = sueloY - self.height * self.scale.y
+    -- self.groundY = self.position.y
+    --
+    
+    -- Spawn del boss
+    self.position.x, self.position.y, self.groundY = 700, 500, 500
+    --
     self.speed = 200
     self.gravity = 2500
     self.jumpSpeed = -750
     self.velocityY = 0
-    self.groundY = 500
 
     self.maxJumpHold = 0.25
     self.jumpHoldTime = 0
@@ -43,7 +52,7 @@ function Character:new(boss)
 
     self.projectiles = {}
 
-    self.vida = 3
+    self.vida = 1
     self.dañoCooldown = 2
     self.tCooldown = 0
     self.alive = true
