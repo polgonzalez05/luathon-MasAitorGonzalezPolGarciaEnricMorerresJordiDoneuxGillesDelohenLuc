@@ -28,7 +28,7 @@ function Character:new(soundManager)
 
     self.position.x, self.position.y, self.groundY = 700, 500, 500
     --
-    self.speed = 200
+    self.speed = 300
     self.gravity = 2500
     self.jumpSpeed = -750
     self.velocityY = 0
