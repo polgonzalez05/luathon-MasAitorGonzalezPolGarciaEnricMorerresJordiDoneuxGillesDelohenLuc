@@ -5,12 +5,13 @@ local Proyectil = Proyectil or require "src/proyectil"
 
 local VendingMachine = AnimatedActor:extend()
 
-function VendingMachine:new(character)
+function VendingMachine:new(character, soundManager)
   VendingMachine.super.new(self, "src/textures/boss/vendingMachineSpritesheet.png", 480, 458, 8, 0, 0, 24, 12)
 
   self.proyectiles = {}
   
   self.character = character
+  self.soundManager = soundManager
 
   self.espera = love.math.random(30, 200) / 100
 
@@ -57,9 +58,9 @@ function VendingMachine:new(character)
 
   self.repeticionesAereo = 0
 
-  bossState = StateMachine()
+  self.bossState = StateMachine()
 
-  bossState:addState("idle", 
+  self.bossState:addState("idle", 
   {
     enter = function()
             print("Boss en idle")
@@ -74,7 +75,7 @@ function VendingMachine:new(character)
 
   })
 
-  bossState:addState("moving", 
+  self.bossState:addState("moving", 
   {
     enter = function()
             print("Boss moviendose")
@@ -89,7 +90,7 @@ function VendingMachine:new(character)
 
   })
 
-  bossState:addState("atacking", 
+  self.bossState:addState("atacking", 
   {
     enter = function()
             print("Boss atacando")
@@ -105,7 +106,7 @@ function VendingMachine:new(character)
 
 
 
-  bossState:addState("aereal", 
+  self.bossState:addState("aereal", 
   {
     enter = function()
       self.repeticionesAereo = love.math.random(1, 5)
@@ -121,7 +122,7 @@ function VendingMachine:new(character)
 
   })
 
-  bossState:addState("throw", 
+  self.bossState:addState("throw", 
   {
     enter = function()
         self:throwAttack()
@@ -136,7 +137,7 @@ function VendingMachine:new(character)
 
   })
 
-  bossState:addState("barrido", 
+  self.bossState:addState("barrido", 
   {
     enter = function()
           self:barridoAttack()
@@ -151,7 +152,7 @@ function VendingMachine:new(character)
 
   })
 
-  bossState:addState("death", 
+  self.bossState:addState("death", 
   {
     enter = function()
             print("Boss muerto")
@@ -165,14 +166,14 @@ function VendingMachine:new(character)
 
   })
 
-  bossState:setInitialState("idle")
+  self.bossState:setInitialState("idle")
 
 
 end
 
 function VendingMachine:update(dt)
 
-  local estado = bossState.state 
+  local estado = self.bossState.state 
 
   -- Si el ataque ha terminado, preparamos el siguiente estado
   if (self.ataqueTerminado) then
@@ -221,15 +222,15 @@ function VendingMachine:update(dt)
         end
 
       elseif (self.faseBarrido == "barrer") then
-        soundManager:setVolume("arrastre", 0.3)
-        soundManager:playLoop("arrastre")
+        self.soundManager:setVolume("arrastre", 0.3)
+        self.soundManager:playLoop("arrastre")
         if (self.forward.x > 0 and self.position.x + self.width >= ancho) then
           self.position.x = ancho - self.width
           self:terminarAtaque()
-          soundManager:setVolume("arrastre", 0)
+          self.soundManager:setVolume("arrastre", 0)
         elseif (self.forward.x < 0 and self.position.x <= 0) then
           self.position.x = 0
-          soundManager:setVolume("arrastre", 0)
+          self.soundManager:stop("arrastre", 0)
           self:terminarAtaque()
         end
 
@@ -259,10 +260,12 @@ function VendingMachine:update(dt)
         end
       elseif (self.faseAereo == "caer") then
         self.position.y = self.position.y + self.velocidadCaida * dt
-        soundManager:play("stomp")
-        soundManager:setVolume("stomp", 0.2)
         if (self.position.y >= self.sueloY) then
           self.position.y = self.sueloY
+          
+          self.soundManager:play("stomp")
+          self.soundManager:setVolume("stomp", 0.2)
+
           self.repeticionesAereo = self.repeticionesAereo - 1
 
           if (self.repeticionesAereo > 0) then
@@ -275,10 +278,6 @@ function VendingMachine:update(dt)
     end
   end
   
-  if love.keyboard.isDown("k") then
-    actorList[2]:restarVida(20 * dt)
-  end
-
   for i = #self.proyectiles, 1, -1 do
     self.proyectiles [i]:update(dt)
     if (self.proyectiles[i]:checkCollision(self.character)) then
@@ -290,7 +289,7 @@ function VendingMachine:update(dt)
     end
   end
 
-  bossState:tick(dt)
+  self.bossState:tick(dt)
 
 end
 
@@ -305,16 +304,16 @@ end
 function VendingMachine:elegirAtaque()
   local n = love.math.random(1, #self.ataques)
 
-  bossState:changeStateToAtNextTick(self.ataques[n])
+  self.bossState:changeStateToAtNextTick(self.ataques[n])
 end
 
 function VendingMachine:siguienteEstado()
   local prob = love.math.random(1, 100)
 
   if (prob <= self.probabilidadIdle) then
-    bossState:changeStateToAtNextTick("idle")
+    self.bossState:changeStateToAtNextTick("idle")
   elseif (prob <= self.probabilidadIdle + self.probabilidadWalk) then
-    bossState:changeStateToAtNextTick("moving")
+    self.bossState:changeStateToAtNextTick("moving")
   else
     self:elegirAtaque()
   end
@@ -360,7 +359,7 @@ function VendingMachine:throwAttack()
   local targetX = self.character.position.x + self.character.width * self.character.scale.x / 2
   local targetY = self.character.position.y + self.character.height * self.character.scale.y / 2
 
-  soundManager:play("chips")
+  self.soundManager:play("chips")
   local proyectil = Proyectil(x, y, targetX, targetY)
 
   table.insert(self.proyectiles, proyectil)

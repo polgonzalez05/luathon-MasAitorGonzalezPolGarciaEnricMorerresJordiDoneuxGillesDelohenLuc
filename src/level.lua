@@ -8,15 +8,30 @@ local Background = require "src/background"
 local Hud = require "src/hud"
 local SoundManager = require "src/soundManager"
 
+local Menu = require "src/menu"
+local EndScreen = require "src/endScreen"
+
 local Level = Object:extend()
 
 function Level:new()
 
-  proyectiles = {}
+  self.screen = "menu"
+
+  self.menu = Menu:new()
+  self.endScreen = nil
+
+  self.character = nil
+  self.vendingMachine = nil
+
+  self.soundManager = SoundManager()
+end
+
+function Level:crearPartida()
+  
   self.map = Sti("src/mapa.lua")
 
-  self.character = Character()
-  self.vendingMachine = VendingMachine(self.character)
+  self.character = Character(self.soundManager)
+  self.vendingMachine = VendingMachine(self.character, self.soundManager)
 
   self.character.boss = self.vendingMachine
 
@@ -28,56 +43,114 @@ function Level:new()
 
   self.camera = Camera(self.map, self.character)
   self.background = Background("src/textures/fondo.png")
-  
-  if not soundManager then
-    soundManager = SoundManager()
-  end
 
-  soundManager:stop("boss")
-  soundManager:playLoop("boss")
-  soundManager:setVolume("boss", 0.15)
+  self.soundManager:stop("boss")
+  self.soundManager:playLoop("boss")
+  self.soundManager:setVolume("boss", 0.15)
+
+  self.menu = nil
+  self.endScreen = nil
+
+  self.screen = "game"
 end
 
-function Level:update(dt)
-  for _, actor in ipairs(self.actors) do
-    actor:update(dt)
-  end
+function Level:accion(action)
+  if action == "jugar" or action == "retry" then
+    self:crearPartida()
+  elseif action == "menu" then
+    self.character = nil
+    self.vendingMachine = nil
+    self.map = nil
+    self.actors = nil
+    self.camera = nil
+    self.background = nil
+    self.hud = nil
 
-  for _, proyectil in ipairs(proyectiles) do
-    proyectil:update(dt)
-  end
+    self.endScreen = nil
+    self.menu = Menu:new()
 
-  self.map:update(dt)
-  self.camera:update(dt)        
+    self.screen = "menu"
 
-  self.hud:update(dt)
-  if love.keyboard.isDown("escape") then
+  elseif action == "salir" then
     love.event.quit()
   end
 end
 
-function Level:resize(w, h)
-  self.map:resize(w, h)
+function Level:update(dt)
+  if self.screen == "game" then
+    for _, actor in ipairs(self.actors) do
+      actor:update(dt)
+    end
+
+    self.map:update(dt)
+    self.camera:update(dt)
+
+    self.hud:update(dt)
+
+    if not self.character.alive then
+      self.endScreen = EndScreen:new("muerte")
+      self.screen = "end"
+
+    elseif not self.vendingMachine.vivo then
+      self.endScreen = EndScreen:new("victoria")
+      self.screen = "end"
+    end
+    
+    if love.keyboard.isDown("escape") then
+      love.event.quit()
+    end
+
+  elseif self.screen == "end" then
+    self.endScreen:update(dt)
+  end
+
 end
 
-function Level:draw()
-  -- 1) fondo  2) mapa  3) actores  (el orden importa)
+function Level:resize(w, h)
+  if self.map then
+    self.map:resize(w, h)
+  end
+end
+
+function Level:draw(mx, my)
+    if self.screen == "menu" then
+      self.menu:draw(mx, my)
+    elseif self.screen == "game" then
+      self:drawGame()
+    elseif self.screen == "end" then
+      self:drawGame()
+      self.endScreen:draw(mx, my)
+    end
+end
+
+function Level:drawGame()
   self.background:draw(self.camera:progress())
   self.map:draw(self.camera.tx, self.camera.ty)
-
   self.camera:attach()
 
   for _, actor in ipairs(self.actors) do
     actor:draw()
   end
 
-  for _, proyectil in ipairs(proyectiles) do
-    proyectil:draw()
-  end
-  
   self.camera:detach()
 
   self.hud:draw()
+end
+
+function Level:mousepressed(x, y, button)
+  if self.screen == "menu" then
+    self:accion(self.menu:mousepressed(x, y, button))
+  elseif self.screen == "end" then
+    self:accion(self.endScreen:mousepressed(x, y, button))
+  end
+end
+
+function Level:keypressed(key)
+  if self.screen == "menu" then
+    self:accion(self.menu:keypressed(key))
+  elseif self.screen == "end" then
+    self:accion(self.endScreen:keypressed(key))
+  end
 end
 
 return Level

@@ -4,8 +4,10 @@ local Bala = require "src/bala"
 
 local Character = AnimatedActor:extend()
 
-function Character:new(boss)
+function Character:new(soundManager)
     Character.super.new(self, "src/textures/player/idle/idle.png", 700, 500, 8, 0, 0, 4, 1)
+
+    self.soundManager = soundManager
 
     self.animations = {
         idle = {"src/textures/player/idle/idle.png", 4, 8, true},
@@ -24,14 +26,6 @@ function Character:new(boss)
     self.daño = 15 -- Daño BALAS
     self.scale = Vector(1.5, 1.5)
 
-    -- Spawn Incio
-    -- local sueloY = 99 * 32
-    -- self.position.x = (34 * 32 - self.width * self.scale.x) / 2
-    -- self.position.y = sueloY - self.height * self.scale.y
-    -- self.groundY = self.position.y
-    --
-    
-    -- Spawn del boss
     self.position.x, self.position.y, self.groundY = 700, 500, 500
     --
     self.speed = 200
@@ -164,7 +158,7 @@ function Character:update(dt)
 end
 
 function Character:shoot()
-    soundManager:play("shoot")
+    self.soundManager:play("shoot")
     local offsetX = 30
 
     local x = self.position.x + offsetX * self.scale.x
@@ -189,7 +183,7 @@ function Character:setCharacterAnimation(name)
 end
 
 function Character:jump()
-    soundManager:play("jump")
+    self.soundManager:play("jump")
     if self.position.y >= self.groundY then
         self.velocityY = self.jumpSpeed
         self.jumpHoldTime = 0
@@ -200,7 +194,7 @@ function Character:recibirDaño(n)
     if(self.tCooldown > 0 or not self.alive) then
         return
     end
-    soundManager:play("hurt")
+    self.soundManager:play("hurt")
     self.vida = self.vida - n
     self.parpadeo = self.dañoCooldown
     self.tCooldown = self.dañoCooldown
