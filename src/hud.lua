@@ -3,6 +3,8 @@ local Object = Object or require "lib/classic"
 local Hud = Object:extend()
 
 function Hud:new(boss, character)
+    self.font = love.graphics.newFont("src/fonts/Minecraft.ttf")
+    love.graphics.setFont(self.font)
 
     self.boss = boss
     self.character = character
@@ -65,7 +67,7 @@ function Hud:draw()
     love.graphics.setColor(0.8, 0.1, 0.1)
     love.graphics.rectangle("fill", x, y, self.barraAncho * porcentaje, self.barraAlto)
 
-    love.graphics.setColor(1,1,1)
+    love.graphics.setColor(1,1,1,1)
     love.graphics.print("VENDING MACHINE", x, y - 22)
 
     love.graphics.setColor(1,1,1,1)
