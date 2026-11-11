@@ -22,7 +22,6 @@ function Character:new(boss)
 
     self.boss = boss
     self.daño = 15
-
     self.scale = Vector(1.5, 1.5)
 
     self.speed = 200

@@ -6,7 +6,7 @@ local Proyectil = Proyectil or require "src/proyectil"
 local VendingMachine = AnimatedActor:extend()
 
 function VendingMachine:new(character)
-  VendingMachine.super.new(self, "src/textures/vendingMachineSpritesheet.png", 200, 250, 8, 0, 0, 24, 12)
+  VendingMachine.super.new(self, "src/textures/vendingMachineSpritesheet.png", 480, 458, 8, 0, 0, 24, 12)
 
   self.proyectiles = {}
   
@@ -190,7 +190,7 @@ function VendingMachine:update(dt)
 
     elseif (estado == "barrido") then
 
-      local ancho = love.graphics.getWidth()
+      local ancho = 1088
 
       if (self.faseBarrido == "buscarBorde") then
 

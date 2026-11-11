@@ -1,5 +1,4 @@
-
-local Vector = Vector or require "lib/vector"
+--[[local Vector = Vector or require "lib/vector"
 local Actor = Actor or require "lib/actor"
 
 local VendingMachine = VendingMachine or require "src/vendingMachine"
@@ -47,5 +46,24 @@ function love.draw()
 
   for _, proyectil in ipairs(proyectiles) do
     proyectil:draw()
-  end
+  end--]]
+
+local Level = require "src/level"
+
+local level
+
+function love.load()
+  level = Level()
+end
+
+function love.update(dt)
+  level:update(dt)
+end
+
+function love.draw()
+  level:draw()
+end
+
+function love.resize(w, h)
+  level:resize(w, h)
 end
