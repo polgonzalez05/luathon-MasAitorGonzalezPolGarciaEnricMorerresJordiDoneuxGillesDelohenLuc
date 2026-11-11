@@ -87,6 +87,11 @@ function StateMachine:canChangeStateTo(stateName)
 	--print("StateMachine::canChageStateTo for " .. self.entity.classType .. " stateName: ", stateName)
 	--print("StateMachine::canChangeStateTo: ", stateName, ", currentState: ", self.state)
 	local theState = self.states[stateName]
+
+	if stateName == self.state then
+		return true
+	end
+	
 	local score = 0
 	local win = 2
 		
@@ -186,6 +191,32 @@ function StateMachine:changeState(stateTo)
 		print("ERROR: StateMachine::changeState, Cannot make transition: State " .. stateTo .. " is not defined.")
 		return false
 	end
+
+	--****************
+	if stateTo == self.state then
+		local currentState = self.states[self.state]
+		if currentState.exit ~= nil then
+			currentState.exit({
+				name = "onExitState",
+				target = self,
+				fromState = self.state,
+				toState = stateTo
+			})
+		end
+
+		if currentState.enter ~= nil then
+			currentState.enter({
+				name = "OnEnterState",
+				target = self,
+				fromState = self.state,
+				toState = stateTo,
+				entity = self.entity
+			})
+		end
+		return true
+	end
+	--****************
+
 	--print("before canChange")
 	--print("btw, can we change?: ", self:canChangeStateTo(stateTo))
 	if self:canChangeStateTo(stateTo) == false then
@@ -198,6 +229,7 @@ function StateMachine:changeState(stateTo)
 		--self:dispatchEvent(outEvent)
 		return false
 	end
+
 	--print("before find path")
 	local path = self:findPath(state, stateTo)
 	--print("after path")
@@ -220,11 +252,15 @@ function StateMachine:changeState(stateTo)
 		local len = firstPath
 		--print("len: ", len)
 		while p < len do
-			self.parentState = self.parentState.parent
-			if self.parentState.exit ~= nil then
-				exitCallback.currentState = self.parentState.name
-				self.parentState.exit(exitCallback)
+			if self.parentState and self.parentState.parent then
+				self.parentState = self.parentState.parent
+
+				if self.parentState.exit ~= nil then
+					exitCallback.currentState = self.parentState.name
+					self.parentState.exit(exitCallback)
+				end
 			end
+			p = p +1
 		end
 	end
 		
