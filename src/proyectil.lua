@@ -8,7 +8,7 @@ function Proyectil:new(x, y, targetX, targetY)
 
     local n = love.math.random(1, 3)
 
-    Proyectil.super.new(self, "src/textures/bolsa/bolsa" .. n .. ".png", x, y, 1, 0, 0, 1, 1)
+    Proyectil.super.new(self, "src/textures/boss/bolsa/bolsa" .. n .. ".png", x, y, 1, 0, 0, 1, 1)
     
     self.scale = Vector(0.07, 0.07)
     local dx = targetX - x

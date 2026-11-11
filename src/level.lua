@@ -24,9 +24,7 @@ function Level:new()
   table.insert(self.actors, self.character)
   table.insert(self.actors, self.vendingMachine)
 
-  self.hud = Hud(self.vendingMachine)
-  
-  table.insert(self.actors, self.hud)
+  self.hud = Hud(self.vendingMachine, self.character)
 
   self.camera = Camera(self.map, self.character)
   self.background = Background("src/textures/fondo.png")
@@ -48,6 +46,7 @@ function Level:update(dt)
   self.map:update(dt)
   self.camera:update(dt)        -- despues de mover a los actores
 
+  self.hud:update(dt)
   if love.keyboard.isDown("escape") then
     love.event.quit()
   end

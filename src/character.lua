@@ -5,15 +5,15 @@ local Bala = require "src/bala"
 local Character = AnimatedActor:extend()
 
 function Character:new(boss)
-    Character.super.new(self, "src/textures/idle/idle.png", 300, 200, 8, 0, 0, 4, 1)
+    Character.super.new(self, "src/textures/player/idle/idle.png", 490, 500, 8, 0, 0, 4, 1)
 
     self.animations = {
-        idle = {"src/textures/idle/idle.png", 4, 8, true},
-        run = {"src/textures/run/run.png", 4, 10, true},
-        jump = {"src/textures/jump/char-jump-0.png", 1, 1, false},
-        landing = {"src/textures/jump/char-fall-0.png", 1, 1, false},
-        runGun = {"src/textures/run-pistol/run-pistol.png", 4, 10, true},
-        shoot = {"src/textures/shoot/shoot.png", 6, 12, false}
+        idle = {"src/textures/player/idle/idle.png", 4, 8, true},
+        run = {"src/textures/player/run/run.png", 4, 10, true},
+        jump = {"src/textures/player/jump/char-jump-0.png", 1, 1, false},
+        landing = {"src/textures/player/jump/char-fall-0.png", 1, 1, false},
+        runGun = {"src/textures/player/run-pistol/run-pistol.png", 4, 10, true},
+        shoot = {"src/textures/player/shoot/shoot.png", 6, 12, false}
     }
 
     self.currentAnimation = ""
@@ -44,7 +44,7 @@ function Character:new(boss)
     self.projectiles = {}
 
     self.vida = 3
-    self.dañoCooldown = 5
+    self.dañoCooldown = 2
     self.tCooldown = 0
     self.alive = true
 
