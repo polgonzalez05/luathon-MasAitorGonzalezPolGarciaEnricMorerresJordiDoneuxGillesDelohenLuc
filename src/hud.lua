@@ -2,9 +2,12 @@ local Object = Object or require "lib/classic"
 
 local Hud = Object:extend()
 
-function Hud:new(boss)
+function Hud:new(boss, character)
+    self.font = love.graphics.newFont("src/fonts/Minecraft.ttf")
+    love.graphics.setFont(self.font)
 
     self.boss = boss
+    self.character = character
 
     self.barraAncho = 600
     self.barraAlto = 24
@@ -19,6 +22,13 @@ function Hud:new(boss)
 end
 
 function Hud:update(dt)
+
+    self.imagenVida = love.graphics.newImage("src/textures/hud/vida.png")
+    self.imagenVida:setFilter("linear", "linear")
+    self.vidaX = 40
+    self.vidaY = 40
+    self.espacioVida = 10
+    self.tamañoVida = 80
 
     local vida = self.boss.vida
 
@@ -39,8 +49,8 @@ function Hud:update(dt)
 end
 
 function Hud:draw()
-    local ancho = love.graphics.getWidth()
-    local alto = love.graphics.getHeight()
+    local ancho = 1920
+    local alto = 1080
 
     local x = (ancho - self.barraAncho) / 2
     local y = alto - self.margenAbajo - self.barraAlto
@@ -57,10 +67,14 @@ function Hud:draw()
     love.graphics.setColor(0.8, 0.1, 0.1)
     love.graphics.rectangle("fill", x, y, self.barraAncho * porcentaje, self.barraAlto)
 
-    love.graphics.setColor(1,1,1)
+    love.graphics.setColor(1,1,1,1)
     love.graphics.print("VENDING MACHINE", x, y - 22)
 
     love.graphics.setColor(1,1,1,1)
+
+    for i=1, self.character.vida do
+        love.graphics.draw(self.imagenVida, self.vidaX + (i - 1) * (self.tamañoVida + self.espacioVida), self.vidaY, 0, self.tamañoVida / self.imagenVida:getWidth(), self.tamañoVida / self.imagenVida:getHeight())
+    end
 end
 
 return Hud

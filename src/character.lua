@@ -1,360 +1,239 @@
 local AnimatedActor = require "lib/animatedActor"
 local Vector = require "lib/vector"
+local Bala = require "src/bala"
 
 local Character = AnimatedActor:extend()
 
-local function loadFrames(folder)
-    local info = love.filesystem.getInfo(folder)
+function Character:new(boss)
+    Character.super.new(self, "src/textures/player/idle/idle.png", 700, 500, 8, 0, 0, 4, 1)
 
-    if not info or info.type ~= "directory" then
-        return {}
-    end
-
-    local files = love.filesystem.getDirectoryItems(folder)
-
-    table.sort(files, function(a, b)
-        local numberA = tonumber(a:match("(%d+)%.[Pp][Nn][Gg]$")) or 0
-        local numberB = tonumber(b:match("(%d+)%.[Pp][Nn][Gg]$")) or 0
-
-        if numberA == numberB then
-            return a < b
-        end
-
-        return numberA < numberB
-    end)
-
-    local frames = {}
-
-    for _, file in ipairs(files) do
-        if file:lower():match("%.png$") then
-            frames[#frames + 1] =
-                love.graphics.newImage(folder .. "/" .. file)
-        end
-    end
-
-    return frames
-end
-
-local function makeAnimation(folder, frameTime)
-    return {
-        frames = loadFrames(folder),
-        speed = frameTime
+    self.animations = {
+        idle = {"src/textures/player/idle/idle.png", 4, 8, true},
+        run = {"src/textures/player/run/run.png", 4, 10, true},
+        jump = {"src/textures/player/jump/char-jump-0.png", 1, 1, false},
+        landing = {"src/textures/player/jump/char-fall-0.png", 1, 1, false},
+        runGun = {"src/textures/player/run-pistol/run-pistol.png", 4, 10, true},
+        shoot = {"src/textures/player/shoot/shoot.png", 6, 12, false}
     }
-end
 
-function Character:new()
-    Character.super.new(
-        self,
-        "src/textures/idle/char-idle-0.png",
-        300, 200, 1, 0, 0, 1, 1
-    )
+    self.currentAnimation = ""
 
+    self:setCharacterAnimation("idle")
+
+    self.boss = boss
+    self.daño = 15 -- Daño BALAS
     self.scale = Vector(1.5, 1.5)
 
+    -- Spawn Incio
+    -- local sueloY = 99 * 32
+    -- self.position.x = (34 * 32 - self.width * self.scale.x) / 2
+    -- self.position.y = sueloY - self.height * self.scale.y
+    -- self.groundY = self.position.y
+    --
+    
+    -- Spawn del boss
+    self.position.x, self.position.y, self.groundY = 700, 500, 500
+    --
     self.speed = 200
     self.gravity = 2500
-    self.jumpSpeed = -850
+    self.jumpSpeed = -750
     self.velocityY = 0
-    self.groundY = 320
 
     self.maxJumpHold = 0.25
     self.jumpHoldTime = 0
     self.jumpWasDown = false
 
-    self.animations = {
-        Idle = makeAnimation("src/textures/idle", 0.12),
-        Pistol = makeAnimation("src/textures/pistol", 0.12),
-        Run = makeAnimation("src/textures/run", 0.08),
-        Jump = makeAnimation("src/textures/jump", 0.10),
-        Shoot = makeAnimation("src/textures/shoot", 0.08),
-        ["Run-pistol"] = makeAnimation("src/textures/run-pistol", 0.08)
-    }
-
-    self.effectFrames = loadFrames("src/textures/effect")
-    self.projectileFrames = loadFrames("src/textures/projectile")
-
-    self.projectiles = {}
-    self.effects = {}
-
-    self.hasPistol = true
     self.facing = 1
 
+    self.hasPistol = true
+    
     self.fireRate = 0.5
     self.fireCooldown = 0
+
+    self.projectiles = {}
+
+    self.vida = 3
+    self.dañoCooldown = 2
+    self.tCooldown = 0
+    self.alive = true
+
+    self.parpadeo = 0
+
+    self.wasInAir = false
     self.shootTimer = 0
-    self.effectFrameTime = 0.05
 
-    self.currentAnimation = nil
-    self.currentFrame = 1
-    self.frameTimer = 0
-    self.animationLoop = true
-
-    self:playAnimation("Idle", true)
+    self.hitboxOffsetX = 30
+    self.hitboxOffsetY = 20
 end
 
-function Character:playAnimation(name, loop)
-    local animation = self.animations[name]
 
-    if not animation or #animation.frames == 0 then
-        return false
-    end
+function Character:update(dt)
 
-    if self.currentAnimation ~= name then
-        self.currentAnimation = name
-        self.currentFrame = 1
-        self.frameTimer = 0
-    end
-
-    self.animationLoop = loop
-    return true
-end
-
-function Character:playFirstAvailable(names, loop)
-    for _, name in ipairs(names) do
-        if self:playAnimation(name, loop) then
-            return
-        end
-    end
-end
-
-function Character:updateAnimation(dt)
-    local animation = self.animations[self.currentAnimation]
-
-    if not animation or #animation.frames == 0 then
+    if not self.alive then
         return
     end
 
-    self.frameTimer = self.frameTimer + dt
-
-    while self.frameTimer >= animation.speed do
-        self.frameTimer = self.frameTimer - animation.speed
-
-        if self.currentFrame < #animation.frames then
-            self.currentFrame = self.currentFrame + 1
-        elseif self.animationLoop then
-            self.currentFrame = 1
-        else
-            self.currentFrame = #animation.frames
-            self.frameTimer = 0
-            break
-        end
-    end
-end
-
-function Character:updateProjectiles(dt)
-    local screenWidth = love.graphics.getWidth()
-
-    for i = #self.projectiles, 1, -1 do
-        local projectile = self.projectiles[i]
-
-        projectile.x = projectile.x
-            + projectile.direction * projectile.speed * dt
-        projectile.time = projectile.time + dt
-
-        if projectile.x < -100 or projectile.x > screenWidth + 100 then
-            table.remove(self.projectiles, i)
-        end
-    end
-
-    for i = #self.effects, 1, -1 do
-        local effect = self.effects[i]
-        effect.time = effect.time + dt
-
-        if effect.time >= #self.effectFrames * self.effectFrameTime then
-            table.remove(self.effects, i)
-        end
-    end
-end
-
-function Character:update(dt)
     local spaceDown = love.keyboard.isDown("space")
-    local onGround = self.position.y >= self.groundY
-
-    if spaceDown and not self.jumpWasDown and onGround then
-        self:jump()
-    end
-
-    self.jumpWasDown = spaceDown
-
     local moving = false
 
-    if love.keyboard.isDown("a") then
+    if (love.keyboard.isDown("a") and self.position.x>= 0) then
         self.position.x = self.position.x - self.speed * dt
         self.facing = -1
         moving = true
     end
 
-    if love.keyboard.isDown("d") then
+    if (love.keyboard.isDown("d") and self.position.x<= 992) then
         self.position.x = self.position.x + self.speed * dt
         self.facing = 1
         moving = true
     end
 
+    if (spaceDown and not self.jumpWasDown and self.position.y >= self.groundY) then
+        self:jump()
+    end
+
+    self.jumpWasDown = spaceDown
+
     local gravity = self.gravity
 
-    if spaceDown
-        and self.velocityY < 0
-        and self.jumpHoldTime < self.maxJumpHold then
+    if (spaceDown and self.velocityY < 0 and self.jumpHoldTime < self.maxJumpHold) then
         gravity = self.gravity * 0.35
-        self.jumpHoldTime = math.min(
-            self.jumpHoldTime + dt,
-            self.maxJumpHold
-        )
+        self.jumpHoldTime = self.jumpHoldTime + dt
     end
 
     self.velocityY = self.velocityY + gravity * dt
     self.position.y = self.position.y + self.velocityY * dt
 
-    if self.position.y >= self.groundY then
+    if (self.position.y >= self.groundY) then
         self.position.y = self.groundY
         self.velocityY = 0
     end
 
+    local inAir = self.position.y < self.groundY
+
+    if (self.wasInAir and not inAir) then
+        self:setCharacterAnimation("landing")
+    end
+
+    self.wasInAir = inAir
+
+    if (self.shootTimer > 0) then
+        self:setCharacterAnimation("shoot")
+    elseif (inAir) then
+        self:setCharacterAnimation("jump")
+    elseif (self.currentAnimation == "landing" and not self.animationFinished) then
+
+    elseif (moving) then
+        self:setCharacterAnimation("run")
+    else
+        self:setCharacterAnimation("idle")
+    end
+
     self.fireCooldown = math.max(0, self.fireCooldown - dt)
+    self.shootTimer = math.max(0, self.shootTimer - dt)
 
-    local fireDown =
-        love.keyboard.isDown("f") or love.mouse.isDown(1)
-
-    if fireDown and self.fireCooldown <= 0 then
+    if ((love.keyboard.isDown("f") or love.mouse.isDown(1)) and self.fireCooldown <= 0) then
         self:shoot()
         self.fireCooldown = self.fireRate
+        self.shootTimer = 0.25
     end
 
-    self.shootTimer = math.max(0, self.shootTimer - dt)
-    self:updateProjectiles(dt)
+    for i = #self.projectiles, 1, -1 do
+        self.projectiles[i]:update(dt)
 
-    if self.shootTimer > 0 then
-        self:playFirstAvailable({ "Shoot", "Pistol", "Idle" }, false)
-    elseif self.position.y < self.groundY then
-        self:playFirstAvailable({ "Jump", "Pistol", "Idle" }, false)
-    elseif moving and self.hasPistol then
-        self:playFirstAvailable(
-            { "Run-pistol", "Run", "Pistol", "Idle" },
-            true
-        )
-    elseif moving then
-        self:playFirstAvailable({ "Run", "Idle" }, true)
-    elseif self.hasPistol then
-        self:playFirstAvailable({ "Pistol", "Idle" }, true)
-    else
-        self:playAnimation("Idle", true)
+        if (self.projectiles[i]:checkCollision(self.boss)) then
+            print("BALA HA IMPACTADO")
+            self.boss:restarVida(self.daño)
+            print("VIDA DEL BOSS: " .. self.boss.vida)
+            table.remove(self.projectiles, i)
+
+        elseif (self.projectiles[i].position.x <= 30 or self.projectiles[i].position.x > 1050) then
+            table.remove(self.projectiles, i)
+        end
     end
 
-    self:updateAnimation(dt)
+    self.tCooldown = math.max(0, self.tCooldown - dt)
+
+    if (self:checkCollision(self.boss)) then
+        self:recibirDaño(1)
+    end
+
+    self.parpadeo = math.max(0, self.parpadeo - dt)
+
+    Character.super.update(self, dt)
 end
 
 function Character:shoot()
-    local shootAnimation = self.animations["Shoot"]
+    soundManager:play("shoot")
+    local offsetX = 30
 
-    if shootAnimation and #shootAnimation.frames > 0 then
-        self.shootTimer = #shootAnimation.frames * shootAnimation.speed
+    local x = self.position.x + offsetX * self.scale.x
+    local y = self.position.y + 36 * self.scale.y
 
-        self.currentAnimation = nil
-        self:playAnimation("Shoot", false)
+    local targetX = x + self.facing * 1000
+    local targetY = y
+
+    table.insert(self.projectiles, Bala(x, y, targetX, targetY))
+        
+end
+
+function Character:setCharacterAnimation(name)
+    if self.currentAnimation == name then
+        return
     end
 
-    local offsetX
+    local anim = self.animations[name]
 
-    if self.facing == 1 then
-        offsetX = 46.5
-    else
-        offsetX = 17.5
-    end
-
-    local muzzleX = self.position.x + offsetX * self.scale.x
-    local muzzleY = self.position.y + 35.5 * self.scale.y
-
-    if #self.effectFrames > 0 then
-        table.insert(self.effects, {
-            x = self.position.x,
-            y = self.position.y,
-            direction = self.facing,
-            time = 0
-        })
-    end
-
-    if #self.projectileFrames > 0 then
-        table.insert(self.projectiles, {
-            x = muzzleX,
-            y = muzzleY,
-            direction = self.facing,
-            speed = 650,
-            time = 0
-        })
-    end
+    self:setAnimation(anim[1], anim[2], anim[3], anim[4])
+    self.currentAnimation = name
 end
 
 function Character:jump()
+    soundManager:play("jump")
     if self.position.y >= self.groundY then
         self.velocityY = self.jumpSpeed
         self.jumpHoldTime = 0
     end
 end
 
+function Character:recibirDaño(n)
+    if(self.tCooldown > 0 or not self.alive) then
+        return
+    end
+    soundManager:play("hurt")
+    self.vida = self.vida - n
+    self.parpadeo = self.dañoCooldown
+    self.tCooldown = self.dañoCooldown
+
+    if (self.vida <= 0) then
+        self.vida = 0
+        self.alive = false
+        print("MUERTO")
+    end
+end
+
+
 function Character:draw()
-    for _, projectile in ipairs(self.projectiles) do
-        local frameNumber =
-            math.floor(projectile.time / 0.08) % #self.projectileFrames + 1
-        local image = self.projectileFrames[frameNumber]
+    local drawX = self.position.x + self.origin.x * self.scale.x
+    local drawY = self.position.y + self.origin.y * self.scale.y
 
-        love.graphics.draw(
-            image,
-            projectile.x,
-            projectile.y,
-            0,
-            1.5 * projectile.direction,
-            1.5,
-            image:getWidth() / 2,
-            image:getHeight() / 2
-        )
+    if (self.parpadeo > 0 and math.floor(self.parpadeo * 8) % 2 == 0) then
+        love.graphics.setColor(1,1,1,0)
+    else
+        love.graphics.setColor(1,1,1,1)
     end
 
-    -- Dibuja el personaje.
-    local animation = self.animations[self.currentAnimation]
 
-    if animation and #animation.frames > 0 then
-        local image = animation.frames[self.currentFrame]
-        local drawX = self.position.x
-        local scaleX = self.scale.x * self.facing
+    love.graphics.draw(self.image, self.frames[math.floor(self.actFrame)],
+        drawX, drawY, 0,
+        self.scale.x * self.facing, self.scale.y,
+        self.facing == -1 and self.width - self.origin.x or self.origin.x,
+        self.origin.y)
 
-        if self.facing < 0 then
-            drawX = drawX + image:getWidth() * self.scale.x
-        end
+    love.graphics.setColor(1,1,1,1)
 
-        love.graphics.draw(
-            image,
-            drawX,
-            self.position.y,
-            0,
-            scaleX,
-            self.scale.y
-        )
-    end
-
-    for _, effect in ipairs(self.effects) do
-        if #self.effectFrames > 0 then
-            local frameNumber =
-                math.floor(effect.time / self.effectFrameTime) + 1
-
-            frameNumber = math.min(frameNumber, #self.effectFrames)
-
-            local image = self.effectFrames[frameNumber]
-            local drawX = effect.x
-            local scaleX = self.scale.x * effect.direction
-
-            if effect.direction < 0 then
-                drawX = drawX + image:getWidth() * self.scale.x
-            end
-
-            love.graphics.draw(
-                image,
-                drawX,
-                effect.y,
-                0,
-                scaleX,
-                self.scale.y
-            )
-        end
+    for _, projectile in ipairs(self.projectiles) do 
+        projectile:draw()
     end
 end
 

@@ -1,49 +1,95 @@
+local Menu = require "src/menu"
+local Level = require "src/level"
+local EndScreen = require "src/endScreen"
 
-local Vector = Vector or require "lib/vector"
-local Actor = Actor or require "lib/actor"
-
-local VendingMachine = VendingMachine or require "src/vendingMachine"
-local Character = Character or require "src/character"
-local Hud = Hud or require "src/hud"
-
-actorList = {}
+local W, H = 1920, 1080
+local canvas, menu, level, endScreen
+local screen = "menu"
+local scale, offsetX, offsetY
 
 function love.load()
+    canvas = love.graphics.newCanvas(W, H)
+    menu = Menu:new()
 
-  proyectiles = {}
+    local w, h = love.graphics.getDimensions()
+    love.resize(w, h)
+end
 
-  local character = Character()
-  local vendingMachine = VendingMachine(character)
+function love.resize(w, h)
+    scale = math.min(w / W, h / H)
+    offsetX = (w - W * scale) / 2
+    offsetY = (h - H * scale) / 2
 
-  table.insert(actorList, character)
-  table.insert(actorList, vendingMachine)
-  
-  hud = Hud(vendingMachine)
+    if level then
+        level:resize(W, H)
+    end
+end
 
-  table.insert(actorList, hud)
-
+local function accion(action)
+    if action == "jugar" or action == "retry" then
+        level = Level()
+        menu, endScreen = nil, nil
+        screen = "game"
+    elseif action == "menu" then
+        level, endScreen = nil, nil
+        menu = Menu:new()
+        screen = "menu"
+    elseif action == "salir" then
+        love.event.quit()
+    end
 end
 
 function love.update(dt)
-  for _, actor in ipairs(actorList) do
-    actor:update(dt)
-  end
+    if screen == "game" then
+        level:update(dt)
 
-  for _, proyectil in ipairs(proyectiles) do
-    proyectil:update(dt)
-  end
-  
-  if (love.keyboard.isDown("escape")) then
-    love.event.quit()
-  end
+        if not level.character.alive then
+            endScreen = EndScreen:new("muerte")
+            screen = "end"
+        elseif not level.vendingMachine.vivo then
+            endScreen = EndScreen:new("victoria")
+            screen = "end"
+        end
+    elseif screen == "end" then
+        endScreen:update(dt)
+    end
 end
 
 function love.draw()
-  for _, actor in ipairs(actorList) do
-    actor:draw()
-  end
+    local mx, my = love.mouse.getPosition()
+    mx, my = (mx - offsetX) / scale, (my - offsetY) / scale
 
-  for _, proyectil in ipairs(proyectiles) do
-    proyectil:draw()
-  end
+    love.graphics.setCanvas(canvas)
+    love.graphics.clear(0, 0, 0, 1)
+
+    if screen == "menu" then
+        menu:draw(mx, my)
+    elseif screen == "game" then
+        level:draw()
+    else
+        level:draw()
+        endScreen:draw(mx, my)
+    end
+
+    love.graphics.setCanvas()
+    love.graphics.setColor(1, 1, 1, 1)
+    love.graphics.draw(canvas, offsetX, offsetY, 0, scale, scale)
+end
+
+function love.mousepressed(x, y, button)
+    x, y = (x - offsetX) / scale, (y - offsetY) / scale
+
+    if screen == "menu" then
+        accion(menu:mousepressed(x, y, button))
+    elseif screen == "end" then
+        accion(endScreen:mousepressed(x, y, button))
+    end
+end
+
+function love.keypressed(key)
+    if screen == "menu" then
+        accion(menu:keypressed(key))
+    elseif screen == "end" then
+        accion(endScreen:keypressed(key))
+    end
 end
