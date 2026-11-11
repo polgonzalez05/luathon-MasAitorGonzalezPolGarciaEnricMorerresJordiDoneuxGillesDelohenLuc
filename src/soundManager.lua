@@ -8,7 +8,10 @@ function SoundManager:new()
         ["hurt"] = love.audio.newSource("src/sounds/hurt.wav", "static"),
         ["boss"] = love.audio.newSource("src/sounds/bosstheme.wav", "stream"),
         ["jump"] = love.audio.newSource("src/sounds/jump.wav", "static"),
-        ["shoot"] = love.audio.newSource("src/sounds/shoot.wav", "static")
+        ["shoot"] = love.audio.newSource("src/sounds/shoot.wav", "static"),
+        ["stomp"] = love.audio.newSource("src/sounds/stomp.wav", "static"),
+        ["arrastre"] = love.audio.newSource("src/sounds/arrastre.wav", "static"),
+        ["chips"] = love.audio.newSource("src/sounds/chips.wav", "static")
     }
 end
 

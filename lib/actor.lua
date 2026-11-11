@@ -11,6 +11,7 @@ function Actor:new(_image, _x, _y, _speed)
     self.width = self.image:getWidth()
     self.height = self.image:getHeight()
     self.rot = 0
+    self.scale = Vector(1,1)
 end
 
 function Actor:update(dt)
@@ -26,21 +27,27 @@ function Actor:dist(aa)
 end
 
 function Actor:checkCollision(aa)
-    local a_left = aa.position.x
-    local a_right = aa.position.x + aa.width
-    local a_top = aa.position.y
-    local a_bottom = aa.position.y + aa.height
+    local offsetAX = aa.hitboxOffsetX or 0
+    local offsetAY = aa.hitboxOffsetY or 0
 
-    local b_left = self.position.x
-    local b_right = self.position.x + self.width
-    local b_top = self.position.y
-    local b_bottom = self.position.y + self.height
+    local offsetBX = self.hitboxOffsetX or 0
+    local offsetBY = self.hitboxOffsetY or 0
+
+    local a_left = aa.position.x + offsetAX
+    local a_right = aa.position.x + aa.width * aa.scale.x - offsetAX
+    local a_top = aa.position.y + offsetAY
+    local a_bottom = aa.position.y + aa.height * aa.scale.y - offsetAY
+
+    local b_left = self.position.x + offsetBX
+    local b_right = self.position.x + self.width * self.scale.x - offsetBX
+    local b_top = self.position.y + offsetBY
+    local b_bottom = self.position.y + self.height * self.scale.y - offsetBY
 
     if
         a_right > b_left and --and Red's left side is further to the left than Blue's right side.
-            a_left < b_right and --and Red's bottom side is further to the bottom than Blue's top side.
-            a_bottom > b_top and --and Red's top side is further to the top than Blue's bottom side then..
-            a_top < b_bottom
+        a_left < b_right and --and Red's bottom side is further to the bottom than Blue's top side.
+        a_bottom > b_top and --and Red's top side is further to the top than Blue's bottom side then..
+        a_top < b_bottom
      then
         --There is collision!
         return true
