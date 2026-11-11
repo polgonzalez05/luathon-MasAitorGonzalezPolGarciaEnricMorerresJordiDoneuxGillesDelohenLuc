@@ -28,6 +28,14 @@ function SoundManager:playLoop(soundName)
     sound:play()
 end
 
+function SoundManager:stop(soundName)
+    local sound = self.sounds[soundName]
+
+    if sound then
+        sound:stop()
+    end
+end
+
 function SoundManager:setVolume(soundName, volume)
     local sound = self.sounds[soundName]
     sound:setVolume(volume)

@@ -29,7 +29,11 @@ function Level:new()
   self.camera = Camera(self.map, self.character)
   self.background = Background("src/textures/fondo.png")
   
-  soundManager = SoundManager()
+  if not soundManager then
+    soundManager = SoundManager()
+  end
+
+  soundManager:stop("boss")
   soundManager:playLoop("boss")
   soundManager:setVolume("boss", 0.15)
 end
