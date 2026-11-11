@@ -21,7 +21,7 @@ function Character:new(boss)
     self:setCharacterAnimation("idle")
 
     self.boss = boss
-    self.daño = 1511 -- Daño BALAS
+    self.daño = 15 -- Daño BALAS
     self.scale = Vector(1.5, 1.5)
 
     -- Spawn Incio
@@ -52,7 +52,7 @@ function Character:new(boss)
 
     self.projectiles = {}
 
-    self.vida = 1
+    self.vida = 3
     self.dañoCooldown = 2
     self.tCooldown = 0
     self.alive = true
