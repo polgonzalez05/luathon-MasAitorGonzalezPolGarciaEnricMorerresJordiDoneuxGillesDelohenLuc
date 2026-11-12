@@ -24,7 +24,6 @@ function VendingMachine:new(character, soundManager, dificultad)
   self.currentAnimation = ""
 
   self:setCharacterAnimation("transformation")
-  self.soundManager:play("glassbreak")
   
   self.character = character
 

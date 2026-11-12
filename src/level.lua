@@ -129,6 +129,8 @@ function Level:update(dt)
 
     if not self.teleportado and self.character.position.y <= 600 and self.character.position.y >= 500 then
       self.character:teleport(700, 450)
+      self.hud.mostrarVidaBoss = true
+      self.soundManager:play("glassbreak")
       self.teleportado = true
     end
 
@@ -138,13 +140,17 @@ function Level:update(dt)
     self.hud:update(dt)
 
     if not self.character.alive then
+      self.soundManager:stopAllSounds()
       self.soundManager:play("lose")
+
       self.endScreen = EndScreen:new("muerte")
       self.screen = "end"
 
     elseif not self.vendingMachine.vivo then
       if (self.vendingMachine.animationFinished) then
+        self.soundManager:stopAllSounds()
         self.soundManager:play("win")
+
         self.endScreen = EndScreen:new("victoria")
         self.screen = "end"
       end

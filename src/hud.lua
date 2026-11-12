@@ -7,6 +7,8 @@ function Hud:new(boss, character)
     self.imagenVida = love.graphics.newImage("src/textures/hud/vida.png")
     self.imagenVida:setFilter("linear", "linear")
 
+    self.mostrarVidaBoss = false
+
     self.boss = boss
     self.character = character
 
@@ -48,32 +50,36 @@ function Hud:update(dt)
 end
 
 function Hud:draw()
-    local x = (1920 - self.barraAncho) / 2
-    local y = 1080 - self.margenAbajo - self.barraAlto
 
-    local porcentaje = self.boss.vida / self.boss.vidaMax
-    local porcentajeVisible = self.vidaVisible / self.boss.vidaMax
+    if self.mostrarVidaBoss then
+        local x = (1920 - self.barraAncho) / 2
+        local y = 1080 - self.margenAbajo - self.barraAlto
 
-    love.graphics.setColor(0.1, 0.1, 0.1, 0.9)
-    love.graphics.rectangle("fill", x - self.borde, y - self.borde, self.barraAncho + self.borde * 2, self.barraAlto + self.borde * 2)
+        local porcentaje = self.boss.vida / self.boss.vidaMax
+        local porcentajeVisible = self.vidaVisible / self.boss.vidaMax
 
-    love.graphics.setColor(1, 0.6, 0.6)
-    love.graphics.rectangle("fill", x, y, self.barraAncho * porcentajeVisible, self.barraAlto)
+        love.graphics.setColor(0.1, 0.1, 0.1, 0.9)
+        love.graphics.rectangle("fill", x - self.borde, y - self.borde, self.barraAncho + self.borde * 2, self.barraAlto + self.borde * 2)
 
-    love.graphics.setColor(0.8, 0.1, 0.1)
-    love.graphics.rectangle("fill", x, y, self.barraAncho * porcentaje, self.barraAlto)
+        love.graphics.setColor(1, 0.6, 0.6)
+        love.graphics.rectangle("fill", x, y, self.barraAncho * porcentajeVisible, self.barraAlto)
 
-    love.graphics.setFont(self.font)
-    love.graphics.setColor(1,1,1,1)
-    love.graphics.print("VENDING MACHINE", x, y - 22)
+        love.graphics.setColor(0.8, 0.1, 0.1)
+        love.graphics.rectangle("fill", x, y, self.barraAncho * porcentaje, self.barraAlto)
 
-    local escala = self.tamañoVida / self.imagenVida:getWidth()
+        love.graphics.setFont(self.font)
+        love.graphics.setColor(1,1,1,1)
+        love.graphics.print("VENDING MACHINE", x, y - 22)
+    
 
-    for i=1, self.character.vida do
-        love.graphics.draw(self.imagenVida, self.vidaX + (i - 1) * (self.tamañoVida + self.espacioVida), self.vidaY, 0, escala, escala)
+        local escala = self.tamañoVida / self.imagenVida:getWidth()
+
+        for i=1, self.character.vida do
+            love.graphics.draw(self.imagenVida, self.vidaX + (i - 1) * (self.tamañoVida + self.espacioVida), self.vidaY, 0, escala, escala)
+        end
+
+        love.graphics.setColor(1,1,1,1)
     end
-
-    love.graphics.setColor(1,1,1,1)
 end
 
 return Hud
