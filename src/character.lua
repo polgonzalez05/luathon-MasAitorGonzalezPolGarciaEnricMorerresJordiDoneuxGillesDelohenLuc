@@ -17,7 +17,7 @@ function Character:new(soundManager)
         runGun = {"src/textures/player/run-pistol/run-pistol.png", 4, 10, true},
         shoot = {"src/textures/player/shoot/shoot.png", 6, 12, false}
     }
-    self.position.x, self.position.y =500, 800    
+    self.position.x, self.position.y =500, 3000    
     self.currentAnimation = ""
 
     self:setCharacterAnimation("idle")
@@ -215,6 +215,7 @@ function Character:recibirDaño(n)
     self.tCooldown = self.dañoCooldown
 
     if (self.vida <= 0) then
+        self.soundManager:stopAllSounds()
         self.vida = 0
         self.alive = false
         print("MUERTO")

@@ -5,7 +5,7 @@ local Proyectil = Proyectil or require "src/proyectil"
 
 local VendingMachine = AnimatedActor:extend()
 
-function VendingMachine:new(character, soundManager)
+function VendingMachine:new(character, soundManager, dificultad)
   VendingMachine.super.new(self, "src/textures/boss/vendingMachineSpritesheet.png", 480, 458, 8, 0, 0, 24, 12)
 
   self.proyectiles = {}
@@ -18,24 +18,95 @@ function VendingMachine:new(character, soundManager)
     death = {"src/textures/boss/Death.png", 24, 10, false}
   }
 
+    self.soundManager = soundManager
+
   self.currentAnimation = ""
 
   self:setCharacterAnimation("transformation")
+  self.soundManager:play("glassbreak")
   
   self.character = character
-  self.soundManager = soundManager
+
+
+
+  local dificultades = {
+    facil = {
+      velocidadMovimiento = 100,
+      velocidadBarrido = 350,
+      velocidadVuelo = 500,
+      velocidadCaida = 1000,
+
+      minT = 2,
+      maxT = 4,
+
+      probabilidadIdle = 40,
+      probabilidadWalk = 35,
+      probabilidadAttack = 25,
+
+      esperaAereo = 0.5,
+      rangoAereo = 80,
+      cantidadProyectiles = 1
+    },
+
+    dificil = {
+          velocidadMovimiento = 150,
+          velocidadBarrido = 500,
+          velocidadVuelo = 700,
+          velocidadCaida = 1400,
+
+          minT = 1,
+          maxT = 2,
+
+          probabilidadIdle = 25,
+          probabilidadWalk = 30,
+          probabilidadAttack = 45,
+      
+          esperaAereo = 0.15,
+          rangoAereo = 25,
+          cantidadProyectiles = 3
+        },
+
+    imposible = {
+      velocidadMovimiento = 220,
+      velocidadBarrido = 700,
+      velocidadVuelo = 950,
+      velocidadCaida = 1900,
+
+      minT = 0.3,
+      maxT = 1,
+
+      probabilidadIdle = 10,
+      probabilidadWalk = 20,
+      probabilidadAttack = 70,
+      
+      esperaAereo = 0.05,
+      rangoAereo = 5,
+      cantidadProyectiles = 5
+    }
+  }
+
+  local config = dificultades[dificultad] or dificultades.facil
+
+  self.velocidadMovimiento = config.velocidadMovimiento
+  self.velocidadBarrido = config.velocidadBarrido
+  self.velocidadVuelo = config.velocidadVuelo
+  self.velocidadCaida = config.velocidadCaida
+
+  self.minT = config.minT
+  self.maxT = config.maxT
+  
+  self.probabilidadIdle = config.probabilidadIdle
+  self.probabilidadWalk = config.probabilidadWalk
+  self.probabilidadAttack = config.probabilidadAttack
+
+  self.esperaAereo = config.esperaAereo
+  self.rangoAereo = config.rangoAereo
+  self.cantidadProyectiles = config.cantidadProyectiles
 
   self.espera = love.math.random(30, 200) / 100
 
-  self.maxT = 2
-  self.minT = 0.3
-  self.ataqueTerminado = false
+  self.ataqueTerminado = false 
 
-  self.probabilidadIdle = 30
-  self.probabilidadWalk = 30
-  self.probabilidadAttack = 40 
-
-  self.velocidadBarrido = 500
   self.faseBarrido = ""
   self.direccionBarrido = 1
   self.esperaP = 0.6
@@ -45,11 +116,8 @@ function VendingMachine:new(character, soundManager)
   self.faseAereo = ""
 
   self.alturaAerea = 250
-  self.velocidadVuelo = 700
-  self.velocidadCaida = 1400
-  self.esperaAereo = 0.5
+
   self.tiempoAereo = 0
-  self.rangoAereo = 80
   self.objetivoX = 0
   self.objetivoY = 0
 
@@ -62,8 +130,6 @@ function VendingMachine:new(character, soundManager)
   
   self.currentAnimation = ""
   self:setCharacterAnimation("transformation")
-
-  self.scale = Vector(-1,1)
 
   self.vidaMax = 1000
   self.vida = self.vidaMax
@@ -82,6 +148,9 @@ function VendingMachine:new(character, soundManager)
   {
     enter = function()
             print("Boss en idle")
+
+            self.speed = 0
+
             if not self.firstTime then
               self:setCharacterAnimation("idleBroken")
             end
@@ -101,6 +170,9 @@ function VendingMachine:new(character, soundManager)
   {
     enter = function()
             print("Boss moviendose")
+
+            self.speed = self.velocidadMovimiento
+
             self:setCharacterAnimation("idleBroken")
             self.espera = love.math.random(self.minT * 100, self.maxT * 100) / 100
     end,
@@ -198,6 +270,12 @@ function VendingMachine:update(dt)
 
   VendingMachine.super.update(self, dt)
 
+  if (self.bossState and self.bossState.state == "barrido") then
+    local ancho = 1088
+
+    self.position.x = math.max(0, math.min(ancho - self.width, self.position.x))
+  end
+
   if (not self.vivo) then
     if (self.animationFinished) then
       self.muerto = true
@@ -272,16 +350,23 @@ function VendingMachine:update(dt)
       elseif (self.faseBarrido == "barrer") then
         self.soundManager:playLoop("arrastre")
         self.soundManager:setVolume("arrastre", 0.3)
-        
-        if (self.forward.x > 0 and self.position.x + self.width >= ancho) then
-          self.position.x = ancho - self.width
-          self.soundManager:stop("arrastre")
-          self:terminarAtaque()
 
-        elseif (self.forward.x < 0 and self.position.x <= 0) then
-          self.position.x = 0
-          self.soundManager:stop("arrastre")
-          self:terminarAtaque()
+        if (self.forward.x > 0) then
+
+          if (self.position.x + self.width >= ancho) then
+            self.position.x = ancho - self.width
+            self.soundManager:stop("arrastre")
+            self:terminarAtaque()
+          end
+
+        elseif (self.forward.x < 0) then
+
+          if (self.position.x <= 0) then
+            self.position.x = 0
+            self.soundManager:stop("arrastre")
+            self:terminarAtaque()
+          end
+
         end
       end
       
@@ -367,7 +452,7 @@ function VendingMachine:siguienteEstado()
     self.bossState:changeStateToAtNextTick("idle")
   elseif (prob <= self.probabilidadIdle + self.probabilidadWalk) then
     self.bossState:changeStateToAtNextTick("moving")
-  else
+  elseif (prob <= self.probabilidadIdle + self.probabilidadWalk + self.probabilidadAttack) then
     self:elegirAtaque()
   end
 
@@ -420,9 +505,23 @@ function VendingMachine:throwAttack()
   local targetY = self.character.position.y + self.character.height * self.character.scale.y / 2
 
   self.soundManager:play("chips")
-  local proyectil = Proyectil(x, y, targetX, targetY)
 
-  table.insert(self.proyectiles, proyectil)
+  for i = 1, self.cantidadProyectiles do
+
+    local offsetX = love.math.random(-80, 80)
+    local offsetY = love.math.random(-40, 40)
+
+    local proyectil = Proyectil(
+      x,
+      y,
+      targetX + offsetX,
+      targetY + offsetY
+    )
+
+    table.insert(self.proyectiles, proyectil)
+
+  end
+
   self:terminarAtaque()
 end
 
@@ -467,8 +566,6 @@ function VendingMachine:barridoAttack()
     end
   end
 
-  self.scale = self.scale * Vector(self.forward.x, 1)
-
 end
 
 function VendingMachine:restarVida(value)
@@ -480,6 +577,8 @@ function VendingMachine:restarVida(value)
   self.vida = math.max(0, self.vida - value)
 
   if (self.vida <= 0) then
+    self.soundManager:stopAllSounds()
+    self.soundManager:play("shut-down")
     self.vivo = false
     self.speed = 0
     self:setCharacterAnimation("death")
@@ -494,12 +593,6 @@ function VendingMachine:setCharacterAnimation(name)
   local anim = self.animations[name]
   self:setAnimation(anim[1], anim[2], anim[3], anim[4])
   self.currentAnimation = name
-end
-
-function VendingMachine:setDirection(direction)
-  self.forward = Vector(direction, 0)
-
-  self.scale.x = direction
 end
 
 return VendingMachine

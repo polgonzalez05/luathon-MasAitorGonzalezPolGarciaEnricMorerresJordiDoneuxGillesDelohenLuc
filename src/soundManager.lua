@@ -11,7 +11,11 @@ function SoundManager:new()
         ["shoot"] = love.audio.newSource("src/sounds/shoot.wav", "static"),
         ["stomp"] = love.audio.newSource("src/sounds/stomp.wav", "static"),
         ["arrastre"] = love.audio.newSource("src/sounds/arrastre.wav", "static"),
-        ["chips"] = love.audio.newSource("src/sounds/chips.wav", "static")
+        ["chips"] = love.audio.newSource("src/sounds/chips.wav", "static"),
+        ["shut-down"] = love.audio.newSource("src/sounds/shut-down-2.wav", "static"),
+        ["lose"] = love.audio.newSource("src/sounds/lose-2.wav", "static"),
+        ["win"] = love.audio.newSource("src/sounds/win-8.wav", "static"),
+        ["glassbreak"] = love.audio.newSource("src/sounds/glassbreak.wav", "static")
     }
 end
 
@@ -32,6 +36,12 @@ function SoundManager:stop(soundName)
     local sound = self.sounds[soundName]
 
     if sound then
+        sound:stop()
+    end
+end
+
+function SoundManager:stopAllSounds()
+    for _, sound in pairs(self.sounds) do
         sound:stop()
     end
 end
