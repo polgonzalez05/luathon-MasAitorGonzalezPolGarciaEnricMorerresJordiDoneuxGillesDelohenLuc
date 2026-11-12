@@ -4,11 +4,11 @@ local Bala = require "src/bala"
 
 local Character = AnimatedActor:extend()
 
-function Character:new(boss)
+function Character:new(soundManager)
     
     
     Character.super.new(self, "src/textures/player/idle/idle.png", 700 , 500, 8, 0, 0, 4, 1)
-
+    self.soundManager = soundManager
     self.animations = {
         idle = {"src/textures/player/idle/idle.png", 4, 8, true},
         run = {"src/textures/player/run/run.png", 4, 10, true},
@@ -17,7 +17,7 @@ function Character:new(boss)
         runGun = {"src/textures/player/run-pistol/run-pistol.png", 4, 10, true},
         shoot = {"src/textures/player/shoot/shoot.png", 6, 12, false}
     }
-    self.position.x, self.position.y = 700, 1800    
+    self.position.x, self.position.y =500, 800    
     self.currentAnimation = ""
 
     self:setCharacterAnimation("idle")
@@ -173,7 +173,7 @@ function Character:getBody()
 end
 
 function Character:shoot()
-    soundManager:play("shoot")
+    self.soundManager:play("shoot")
     local offsetX = 30
 
     local x = self.position.x + offsetX * self.scale.x
@@ -199,7 +199,7 @@ end
 
 function Character:jump()
     if not self.onGround then   return end
-    soundManager:play("jump")
+    self.soundManager:play("jump")
     self.velocityY = self.jumpSpeed
     self.jumpHoldTime = 0
     self.onGround = false
@@ -209,7 +209,7 @@ function Character:recibirDaño(n)
     if(self.tCooldown > 0 or not self.alive) then
         return
     end
-    soundManager:play("hurt")
+    self.soundManager:play("hurt")
     self.vida = self.vida - n
     self.parpadeo = self.dañoCooldown
     self.tCooldown = self.dañoCooldown

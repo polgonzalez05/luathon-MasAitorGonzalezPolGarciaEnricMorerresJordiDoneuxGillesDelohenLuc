@@ -9,7 +9,7 @@ function VendingMachine:new(character, soundManager)
   VendingMachine.super.new(self, "src/textures/boss/vendingMachineSpritesheet.png", 480, 458, 8, 0, 0, 24, 12)
 
   self.proyectiles = {}
-
+  
   self.character = character
   self.soundManager = soundManager
 

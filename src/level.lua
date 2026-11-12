@@ -16,12 +16,15 @@ function Level:new()
   proyectiles = {}
   self.map = Sti("src/mapa.lua")
   self.collision = Collision(self.map, "Capa de patrones 1")
+  self.soundManager = SoundManager()
+  self.character = Character(self.soundManager)
 
-  self.character = Character()
   self.character.collision = self.collision
-  self.vendingMachine = VendingMachine(self.character)
-
+  
+  self.vendingMachine = VendingMachine(self.character,self.soundManager)
   self.character.boss = self.vendingMachine
+  
+  
 
   self.actors = {}
   table.insert(self.actors, self.character)
@@ -32,18 +35,20 @@ function Level:new()
   self.camera = Camera(self.map, self.character)
   self.background = Background("src/textures/fondo.png")
   
-  if not soundManager then
-    soundManager = SoundManager()
-  end
 
-  soundManager:stop("boss")
-  soundManager:playLoop("boss")
-  soundManager:setVolume("boss", 0.15)
+  self.soundManager:stop("boss")
+  self.soundManager:playLoop("boss")
+  self.soundManager:setVolume("boss", 0.15)
 end
 
 function Level:update(dt)
   for _, actor in ipairs(self.actors) do
-    actor:update(dt)
+    if not(actor == self.vendingMachine and self.character.position.y >= 600) then
+      actor:update(dt)
+    end
+  end
+  if self.character.position.y <= 600 and self.character.position.y >= 550 then
+    self.character.position.y = 450
   end
 
   for _, proyectil in ipairs(proyectiles) do
@@ -81,6 +86,11 @@ function Level:draw()
   self.camera:detach()
 
   self.hud:draw()
+end
+
+function Level:mousepressed(x,y,button)
+end
+function Level:keypressed(x,y,button)
 end
 
 return Level
