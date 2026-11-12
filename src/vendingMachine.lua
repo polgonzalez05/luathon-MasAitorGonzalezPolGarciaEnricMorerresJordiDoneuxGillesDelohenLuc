@@ -7,7 +7,8 @@ local VendingMachine = AnimatedActor:extend()
 
 function VendingMachine:new(character, soundManager, dificultad)
   VendingMachine.super.new(self, "src/textures/boss/vendingMachineSpritesheet.png", 480, 458, 8, 0, 0, 24, 12)
-
+  
+  self.anchoBoss = self.width
   self.proyectiles = {}
 
   self.animations = {
@@ -126,10 +127,6 @@ function VendingMachine:new(character, soundManager, dificultad)
     "throw",
     "barrido"
   }
-
-  
-  self.currentAnimation = ""
-  self:setCharacterAnimation("transformation")
 
   self.vidaMax = 1000
   self.vida = self.vidaMax
@@ -270,10 +267,23 @@ function VendingMachine:update(dt)
 
   VendingMachine.super.update(self, dt)
 
-  if (self.bossState and self.bossState.state == "barrido") then
-    local ancho = 1088
+  local ancho = 1088
 
-    self.position.x = math.max(0, math.min(ancho - self.width, self.position.x))
+  if (self.bossState and self.bossState.state == "barrido") then
+
+    self.position.x = math.max(0, math.min(ancho - self.anchoBoss, self.position.x))
+
+  elseif (self.bossState and self.bossState.state == "moving") then
+
+    if (self.position.x <= 0) then
+      self.position.x = 0
+      self.forward = Vector(1, 0)
+
+    elseif (self.position.x + self.anchoBoss >= ancho) then
+      self.position.x = ancho - self.anchoBoss
+      self.forward = Vector(-1, 0)
+    end
+
   end
 
   if (not self.vivo) then
@@ -330,8 +340,8 @@ function VendingMachine:update(dt)
           self:setCharacterAnimation("turn")
           self.faseBarrido = "girarFinal"
 
-        elseif (self.forward.x > 0 and self.position.x + self.width >= ancho) then
-          self.position.x = ancho - self.width
+        elseif (self.forward.x > 0 and self.position.x + self.anchoBoss >= ancho) then
+          self.position.x = ancho - self.anchoBoss
           self.speed = 0
 
           self:setCharacterAnimation("turn2")
@@ -353,8 +363,8 @@ function VendingMachine:update(dt)
 
         if (self.forward.x > 0) then
 
-          if (self.position.x + self.width >= ancho) then
-            self.position.x = ancho - self.width
+          if (self.position.x + self.anchoBoss >= ancho) then
+            self.position.x = ancho - self.anchoBoss
             self.soundManager:stop("arrastre")
             self:terminarAtaque()
           end
@@ -533,17 +543,17 @@ function VendingMachine:barridoAttack()
 
   if (self.position.x < 0) then
     self.position.x = 0
-  elseif (self.position.x + self.width > ancho) then
-    self.position.x = ancho - self.width
+  elseif (self.position.x + self.anchoBoss > ancho) then
+    self.position.x = ancho - self.anchoBoss
   end
 
   local dI = self.position.x
-  local dD = ancho - (self.position.x + self.width)
+  local dD = ancho - (self.position.x + self.anchoBoss)
 
   self.speed = 0
   self.rot = 0
 
-    if (dI < dD) then
+  if (dI < dD) then
     self.forward = Vector(-1, 0)
 
     if (dI <= 5) then
@@ -565,7 +575,6 @@ function VendingMachine:barridoAttack()
       self.faseBarrido = "girarInicial"
     end
   end
-
 end
 
 function VendingMachine:restarVida(value)
