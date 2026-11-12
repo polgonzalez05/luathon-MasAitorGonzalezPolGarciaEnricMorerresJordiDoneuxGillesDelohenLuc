@@ -14,11 +14,19 @@ function Menu:new()
     return menu
 end
 
-local function botones()
+local function botones(tipo)
     local ancho = 300
     local alto = 68
     local x = (ANCHO - ancho) / 2
     local y = ALTO * 0.5
+
+    if tipo == "dificultad" then
+        return {
+            facil = {x = x, y = y, w = ancho, h = alto},
+            dificil = {x = x, y = y + 86, w = ancho, h = alto},
+            imposible = {x = x, y = y + 172, w = ancho, h = alto},
+        }
+    end
 
     return {
         jugar = { x = x, y = y, w = ancho, h = alto },
@@ -46,7 +54,7 @@ local function dibujarBoton(rect, texto, fuente, mouseX, mouseY)
     love.graphics.printf(texto,rect.x,rect.y + (rect.h - fuente:getHeight()) / 2,rect.w, "center")
 end
 
-function Menu:draw(mouseX, mouseY)
+function Menu:draw(mouseX, mouseY, pantalla)
     local anchoFondo, altoFondo = self.fondo:getDimensions()
     local escala = math.max(ANCHO / anchoFondo, ALTO / altoFondo)
     local xFondo = (ANCHO - anchoFondo * escala) / 2
@@ -69,19 +77,27 @@ function Menu:draw(mouseX, mouseY)
         escalaLogo
     )
 
-    local b = botones()
-    dibujarBoton(b.jugar, "PLAY", self.fuente, mouseX, mouseY)
-    dibujarBoton(b.salir, "EXIT", self.fuente, mouseX, mouseY)
+    if pantalla == "dificultad" then
+        local b = botones("dificultad") 
+
+        dibujarBoton(b.facil, "EASY", self.fuente, mouseX, mouseY)
+        dibujarBoton(b.dificil, "HARD", self.fuente, mouseX, mouseY)
+        dibujarBoton(b.imposible, "IMPOSSIBLE", self.fuente, mouseX, mouseY)
+    else
+        local b = botones()
+        dibujarBoton(b.jugar, "PLAY", self.fuente, mouseX, mouseY)
+        dibujarBoton(b.salir, "EXIT", self.fuente, mouseX, mouseY)
+    end
 
     love.graphics.setColor(1, 1, 1, 1)
 end
 
-function Menu:mousepressed(x, y, boton)
+function Menu:mousepressed(x, y, boton, pantalla)
     if boton ~= 1 then
         return nil
     end
 
-    local b = botones()
+    local b = botones(pantalla)
 
     for nombre, rect in pairs(b) do
         if x >= rect.x and x <= rect.x + rect.w
@@ -93,11 +109,24 @@ function Menu:mousepressed(x, y, boton)
     return nil
 end
 
-function Menu:keypressed(tecla)
-    if tecla == "return" or tecla == "kpenter" or tecla == "space" then
-        return "jugar"
-    elseif tecla == "escape" then
-        return "salir"
+function Menu:keypressed(tecla, pantalla)
+
+    if pantalla == "dificultad" then
+        if tecla == "1" then
+            return "facil"
+        elseif tecla == "2" then
+            return "dificil"
+        elseif tecla == "3" then
+            return "imposible"
+        elseif tecla == "escape" then
+            return "volver"
+        end
+    else
+        if tecla == "return" or tecla == "kpenter" or tecla == "space" then
+            return "jugar"
+        elseif tecla == "escape" then
+            return "salir"
+        end
     end
 
     return nil

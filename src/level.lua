@@ -24,6 +24,8 @@ function Level:new()
   self.vendingMachine = nil
 
   self.soundManager = SoundManager()
+
+  self.dificultad = nil
 end
 
 function Level:crearPartida()
@@ -55,8 +57,19 @@ function Level:crearPartida()
 end
 
 function Level:accion(action)
-  if action == "jugar" or action == "retry" then
+  if action == "jugar" then
+    self.screen = "difficulty"
+
+  elseif action == "facil" or action == "dificil" or action == "imposible" then
+    self.dificultad = action
     self:crearPartida()
+
+  elseif action == "volver" then
+    self.screen = "menu"
+
+  elseif action == "retry" then
+    self:crearPartida()
+
   elseif action == "menu" then
     self.character = nil
     self.vendingMachine = nil
@@ -116,7 +129,9 @@ end
 
 function Level:draw(mx, my)
     if self.screen == "menu" then
-      self.menu:draw(mx, my)
+      self.menu:draw(mx, my, "menu")
+    elseif self.screen == "difficulty" then
+      self.menu:draw(mx, my, "dificultad")
     elseif self.screen == "game" then
       self:drawGame()
     elseif self.screen == "end" then
@@ -141,7 +156,9 @@ end
 
 function Level:mousepressed(x, y, button)
   if self.screen == "menu" then
-    self:accion(self.menu:mousepressed(x, y, button))
+    self:accion(self.menu:mousepressed(x, y, button, "menu"))
+  elseif self.screen == "difficulty" then
+    self:accion(self.menu:mousepressed(x, y, button, "dificultad"))
   elseif self.screen == "end" then
     self:accion(self.endScreen:mousepressed(x, y, button))
   end
@@ -149,7 +166,9 @@ end
 
 function Level:keypressed(key)
   if self.screen == "menu" then
-    self:accion(self.menu:keypressed(key))
+    self:accion(self.menu:keypressed(key, "menu"))
+  elseif self.screen == "difficulty" then
+    self:accion(self.menu:keypressed(key, "dificultad"))
   elseif self.screen == "end" then
     self:accion(self.endScreen:keypressed(key))
   end
