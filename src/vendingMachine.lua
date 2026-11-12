@@ -59,13 +59,7 @@ function VendingMachine:new(character, soundManager)
     "barrido"
   }
 
-  self.animations = {
-        idle = {"src/textures/boss/idle.png", 4, 10, true},
-        idleBroken = {"src/textures/boss/idleBroken.png", 4, 6, true},
-        transformation = {"src/textures/boss/Transformation.png", 24, 12, false},
-        turn = {"src/textures/boss/Turn.png", 5, 10, false}
-  }
-
+  
   self.currentAnimation = ""
   self:setCharacterAnimation("transformation")
 
@@ -88,7 +82,10 @@ function VendingMachine:new(character, soundManager)
   {
     enter = function()
             print("Boss en idle")
-            self:setCharacterAnimation("idleBroken")
+            if not self.firstTime then
+              self:setCharacterAnimation("idleBroken")
+            end
+
             self.espera = love.math.random(self.minT * 100, self.maxT * 100) / 100
     end,
 
@@ -213,10 +210,10 @@ function VendingMachine:update(dt)
 
   if(self.firstTime) then 
     self.speed = 0
-    VendingMachine.super.update(self, dt)
 
     if(self.animationFinished) then
       self.firstTime = false
+      self:setCharacterAnimation("idleBroken")
       self.espera = love.math.random(self.minT * 100, self.maxT * 100) / 100
     end
 

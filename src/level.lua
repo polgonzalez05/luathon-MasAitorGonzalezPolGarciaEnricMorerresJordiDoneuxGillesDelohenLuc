@@ -26,6 +26,8 @@ function Level:new()
   self.soundManager = SoundManager()
 
   self.dificultad = nil
+
+  self.teleportado = false
 end
 
 function Level:crearPartida()
@@ -40,7 +42,7 @@ function Level:crearPartida()
   self.vendingMachine = VendingMachine(self.character,self.soundManager)
   self.character.boss = self.vendingMachine
   
-  
+  self.teleportado = false
 
   self.actors = {}
   table.insert(self.actors, self.character)
@@ -95,8 +97,9 @@ function Level:update(dt)
       end
     end
 
-    if self.character.position.y <= 600 and self.character.position.y >= 500 then
-      self.character.position.y = 450
+    if not self.teleportado and self.character.position.y <= 600 and self.character.position.y >= 500 then
+      self.character:teleport(500, 450)
+      self.teleportado = true
     end
 
     self.map:update(dt)

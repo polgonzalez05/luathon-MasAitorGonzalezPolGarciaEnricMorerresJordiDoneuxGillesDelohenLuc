@@ -246,4 +246,21 @@ function Character:draw()
     end
 end
 
+function Character:teleport(x, y)
+    self.position.x = x 
+    self.position.y = y 
+
+    self.velocityY = 0
+    self.onGround = false
+    self.jumpHoldTime = 0
+    self.jumpWasDown = false
+
+    self.currentAnimation = "" 
+    self:setCharacterAnimation("idle")
+    
+    self.facing = 1
+    self.projectiles = {}
+
+end
+
 return Character
