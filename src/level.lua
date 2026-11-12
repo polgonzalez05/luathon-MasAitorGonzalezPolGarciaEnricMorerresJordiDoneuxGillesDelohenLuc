@@ -92,8 +92,10 @@ function Level:update(dt)
       self.screen = "end"
 
     elseif not self.vendingMachine.vivo then
-      self.endScreen = EndScreen:new("victoria")
-      self.screen = "end"
+      if (self.vendingMachine.animationFinished) then
+        self.endScreen = EndScreen:new("victoria")
+        self.screen = "end"
+      end
     end
     
     if love.keyboard.isDown("escape") then

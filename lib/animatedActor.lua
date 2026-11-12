@@ -18,6 +18,9 @@ function AnimatedActor:new(_image, _x, _y, _speed,_fx,_fy,_nFrames,_fr)
   self.frames ={}
   self.frameRate = _fr or 12
   self.actFrame = 1
+
+  self.animationFinished = false
+  self.loop = true
   for i=1,self.nFrames do
     self.frames[i] =love.graphics.newQuad(self.width*(i-1), 0, self.width, self.height, self.image:getWidth(), self.image:getHeight())
   end

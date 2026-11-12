@@ -9,6 +9,18 @@ function VendingMachine:new(character, soundManager)
   VendingMachine.super.new(self, "src/textures/boss/vendingMachineSpritesheet.png", 480, 458, 8, 0, 0, 24, 12)
 
   self.proyectiles = {}
+
+  self.animations = {
+    idleBroken = {"src/textures/boss/IdleBroken.png", 4, 10, true},
+    turn = {"src/textures/boss/Turn.png", 5, 10, false},
+    turn2 = {"src/textures/boss/Turn2.png", 5, 10, false},
+    transformation = {"src/textures/boss/Transformation.png", 24, 10, false},
+    death = {"src/textures/boss/Death.png", 24, 10, false}
+  }
+
+  self.currentAnimation = ""
+
+  self:setCharacterAnimation("transformation")
   
   self.character = character
   self.soundManager = soundManager
@@ -64,6 +76,7 @@ function VendingMachine:new(character, soundManager)
   {
     enter = function()
             print("Boss en idle")
+            self:setCharacterAnimation("idleBroken")
             self.espera = love.math.random(self.minT * 100, self.maxT * 100) / 100
     end,
 
@@ -173,6 +186,16 @@ end
 
 function VendingMachine:update(dt)
 
+  VendingMachine.super.update(self, dt)
+
+  if (not self.vivo) then
+    if (self.animationFinished) then
+      self.muerto = true
+    end
+    return
+  end
+
+
   local estado = self.bossState.state 
 
   -- Si el ataque ha terminado, preparamos el siguiente estado
@@ -182,9 +205,6 @@ function VendingMachine:update(dt)
 
   else
 
-    -- Primero movemos al boss
-    VendingMachine.super.update(self, dt)
-
     if (estado == "idle" or estado == "moving") then
       self.espera = self.espera - dt
 
@@ -193,48 +213,55 @@ function VendingMachine:update(dt)
       end
 
     elseif (estado == "barrido") then
-
       local ancho = 1088
 
-      if (self.faseBarrido == "buscarBorde") then
+      if (self.faseBarrido == "girarInicial") then
+        if (self.animationFinished) then
+          self.speed = self.velocidadBarrido
+          self.faseBarrido = "buscarBorde"
+        end
 
+      elseif (self.faseBarrido == "buscarBorde") then
         if (self.forward.x < 0 and self.position.x <= 0) then
           self.position.x = 0
           self.speed = 0
-          self.tiempoP = self.esperaP
-          self.faseBarrido = "preparar"
+
+          self:setCharacterAnimation("turn")
+          self.faseBarrido = "girarFinal"
 
         elseif (self.forward.x > 0 and self.position.x + self.width >= ancho) then
           self.position.x = ancho - self.width
           self.speed = 0
-          self.tiempoP = self.esperaP
-          self.faseBarrido = "preparar"
+
+          self:setCharacterAnimation("turn2")
+          self.faseBarrido = "girarFinal"
         end
 
-      elseif (self.faseBarrido == "preparar") then
-        self.tiempoP = self.tiempoP - dt
-        
-        if (self.tiempoP <= 0) then
+      elseif (self.faseBarrido == "girarFinal") then
+        if (self.animationFinished) then
           self.forward = Vector(-self.forward.x, 0)
           self.speed = self.velocidadBarrido
-          self.rot = 0.12 * self.forward.x
+          self.rot = 0.12 * self.forward.x 
+
           self.faseBarrido = "barrer"
-        end
+        end 
 
       elseif (self.faseBarrido == "barrer") then
-        self.soundManager:setVolume("arrastre", 0.3)
         self.soundManager:playLoop("arrastre")
+        self.soundManager:setVolume("arrastre", 0.3)
+        
         if (self.forward.x > 0 and self.position.x + self.width >= ancho) then
           self.position.x = ancho - self.width
+          self.soundManager:stop("arrastre")
           self:terminarAtaque()
-          self.soundManager:setVolume("arrastre", 0)
+
         elseif (self.forward.x < 0 and self.position.x <= 0) then
           self.position.x = 0
-          self.soundManager:stop("arrastre", 0)
+          self.soundManager:stop("arrastre")
           self:terminarAtaque()
         end
-
       end
+      
     elseif (estado == "aereal") then
       if (self.faseAereo == "volar") then
         local dx = self.objetivoX - self.position.x
@@ -323,8 +350,12 @@ end
 function VendingMachine:terminarAtaque()
   self.speed = 0
   self.rot = 0
+
   self.faseBarrido = ""
   self.faseAereo = ""
+
+  self:setCharacterAnimation("idleBroken")
+
   self.ataqueTerminado = true
 end
 
@@ -339,7 +370,7 @@ function VendingMachine:aerealAttack()
 end
 
 function VendingMachine:elegirObjetivoAereo()
-  local ancho = love.graphics.getWidth()
+  local ancho = 1088
   local c = self.character
 
   local centroJugador = c.position.x + c.width * c.scale.x / 2
@@ -381,30 +412,57 @@ function VendingMachine:barridoAttack()
   local dI = self.position.x
   local dD = ancho - (self.position.x + self.width)
 
-  self.speed = self.velocidadBarrido
+  self.speed = 0
   self.rot = 0
 
-  if (dI <= 5) then
-    self.forward = Vector(1, 0)
-    self.rot = 0.12
-    self.faseBarrido = "barrer"
-  elseif (dD <= 5) then
+    if (dI < dD) then
     self.forward = Vector(-1, 0)
-    self.faseBarrido = "buscarBorde"
+
+    if (dI <= 5) then
+      self:setCharacterAnimation("turn")
+      self.faseBarrido = "girarFinal"
+    else
+      self:setCharacterAnimation("turn2")
+      self.faseBarrido = "girarInicial"
+    end
 
   else
     self.forward = Vector(1, 0)
-    self.faseBarrido = "buscarBorde"
+
+    if (dD <= 5) then
+      self:setCharacterAnimation("turn2")
+      self.faseBarrido = "girarFinal"
+    else
+      self:setCharacterAnimation("turn")
+      self.faseBarrido = "girarInicial"
+    end
   end
 
 end
 
 function VendingMachine:restarVida(value)
+
+  if (not self.vivo) then
+    return
+  end
+
   self.vida = math.max(0, self.vida - value)
 
   if (self.vida <= 0) then
     self.vivo = false
+    self.speed = 0
+    self:setCharacterAnimation("death")
   end
+end
+
+function VendingMachine:setCharacterAnimation(name)
+  if self.currentAnimation == name then
+    return
+  end
+
+  local anim = self.animations[name]
+  self:setAnimation(anim[1], anim[2], anim[3], anim[4])
+  self.currentAnimation = name
 end
 
 return VendingMachine
