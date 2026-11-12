@@ -1,6 +1,6 @@
 local AnimatedActor = AnimatedActor or require "lib/animatedActor"
 local Vector = Vector or require "lib/vector"
-local StateMachine = StateMachine or require "lib/FSM/StateMachine"
+local StateMachine = StateMachine or require "lib/FSM/stateMachine"
 local Proyectil = Proyectil or require "src/proyectil"
 
 local VendingMachine = AnimatedActor:extend()
