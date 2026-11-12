@@ -59,7 +59,17 @@ function VendingMachine:new(character, soundManager)
     "barrido"
   }
 
-  self.scale = Vector(1,1)
+  self.animations = {
+        idle = {"src/textures/boss/idle.png", 4, 10, true},
+        idleBroken = {"src/textures/boss/idleBroken.png", 4, 6, true},
+        transformation = {"src/textures/boss/Transformation.png", 24, 12, false},
+        turn = {"src/textures/boss/Turn.png", 5, 10, false}
+  }
+
+  self.currentAnimation = ""
+  self:setCharacterAnimation("transformation")
+
+  self.scale = Vector(-1,1)
 
   self.vidaMax = 1000
   self.vida = self.vidaMax
@@ -69,6 +79,8 @@ function VendingMachine:new(character, soundManager)
   self.hitboxOffsetY = 10
 
   self.repeticionesAereo = 0
+
+  self.firstTime = true
 
   self.bossState = StateMachine()
 
@@ -81,7 +93,7 @@ function VendingMachine:new(character, soundManager)
     end,
 
     exit = function()
-
+      
     end,
 
     from = {"moving", "atacking", "aereal", "throw", "barrido"}
@@ -92,6 +104,7 @@ function VendingMachine:new(character, soundManager)
   {
     enter = function()
             print("Boss moviendose")
+            self:setCharacterAnimation("idleBroken")
             self.espera = love.math.random(self.minT * 100, self.maxT * 100) / 100
     end,
 
@@ -198,6 +211,19 @@ function VendingMachine:update(dt)
 
   local estado = self.bossState.state 
 
+  if(self.firstTime) then 
+    self.speed = 0
+    VendingMachine.super.update(self, dt)
+
+    if(self.animationFinished) then
+      self.firstTime = false
+      self.espera = love.math.random(self.minT * 100, self.maxT * 100) / 100
+    end
+
+    self.bossState:tick(dt)
+    return
+  end
+
   -- Si el ataque ha terminado, preparamos el siguiente estado
   if (self.ataqueTerminado) then
     self.ataqueTerminado = false
@@ -263,6 +289,9 @@ function VendingMachine:update(dt)
       end
       
     elseif (estado == "aereal") then
+      
+      self:setCharacterAnimation("idleBroken")
+
       if (self.faseAereo == "volar") then
         local dx = self.objetivoX - self.position.x
         local dy = self.objetivoY - self.position.y
@@ -355,12 +384,13 @@ function VendingMachine:terminarAtaque()
   self.faseAereo = ""
 
   self:setCharacterAnimation("idleBroken")
-
   self.ataqueTerminado = true
 end
 
 function VendingMachine:aerealAttack()
     print("esta haciendo un ataque aereo")
+
+    self:setCharacterAnimation("idleBroken")
 
     self.speed = 0
     self.rot = 0
@@ -383,6 +413,8 @@ end
 
 
 function VendingMachine:throwAttack()
+
+  self:setCharacterAnimation("idleBroken")
 
   local x = self.position.x + self.width / 2
   local y = self.position.y + self.height / 2
@@ -438,6 +470,8 @@ function VendingMachine:barridoAttack()
     end
   end
 
+  self.scale = self.scale * Vector(self.forward.x, 1)
+
 end
 
 function VendingMachine:restarVida(value)
@@ -467,5 +501,16 @@ end
 
 return VendingMachine
 
+    local anim = self.animations[name]
 
+    self:setAnimation(anim[1], anim[2], anim[3], anim[4])
+    self.currentAnimation = name
+end
 
+function VendingMachine:setDirection(direction)
+  self.forward = Vector(direction, 0)
+
+    self.scale.x = direction
+  end
+
+return VendingMachine

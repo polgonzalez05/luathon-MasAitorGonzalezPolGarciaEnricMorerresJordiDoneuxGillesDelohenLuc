@@ -5,10 +5,10 @@ local Bala = require "src/bala"
 local Character = AnimatedActor:extend()
 
 function Character:new(soundManager)
-    Character.super.new(self, "src/textures/player/idle/idle.png", 700, 500, 8, 0, 0, 4, 1)
-
+    
+    
+    Character.super.new(self, "src/textures/player/idle/idle.png", 700 , 500, 8, 0, 0, 4, 1)
     self.soundManager = soundManager
-
     self.animations = {
         idle = {"src/textures/player/idle/idle.png", 4, 8, true},
         run = {"src/textures/player/run/run.png", 4, 10, true},
@@ -17,7 +17,7 @@ function Character:new(soundManager)
         runGun = {"src/textures/player/run-pistol/run-pistol.png", 4, 10, true},
         shoot = {"src/textures/player/shoot/shoot.png", 6, 12, false}
     }
-
+    self.position.x, self.position.y =500, 800    
     self.currentAnimation = ""
 
     self:setCharacterAnimation("idle")
@@ -26,7 +26,20 @@ function Character:new(soundManager)
     self.daño = 15 -- Daño BALAS
     self.scale = Vector(1.5, 1.5)
 
-    self.position.x, self.position.y, self.groundY = 700, 500, 500
+    -- Spawn Incio
+    -- local sueloY = 99 * 32
+    -- self.position.x = (34 * 32 - self.width * self.scale.x) / 2
+    -- self.position.y = sueloY - self.height * self.scale.y
+    -- self.groundY = self.position.y
+    --
+    
+    -- Spawn del boss
+
+   
+    self.onGround = false
+    self.maxFallSpeed = 900
+    self.bodyOffX, self.bodyOffY = 33, 33  
+    self.bodyW, self.bodyH = 30, 39
     --
     self.speed = 300
     self.gravity = 2500
@@ -62,52 +75,49 @@ end
 
 
 function Character:update(dt)
-
-    if not self.alive then
-        return
-    end
+    if not self.alive then return end
+    dt = math.min(dt, 1/30)
 
     local spaceDown = love.keyboard.isDown("space")
     local moving = false
+    local dx = 0
 
-    if (love.keyboard.isDown("a") and self.position.x>= 0) then
-        self.position.x = self.position.x - self.speed * dt
+    if love.keyboard.isDown("a") then
+        dx = dx - self.speed * dt
         self.facing = -1
         moving = true
     end
-
-    if (love.keyboard.isDown("d") and self.position.x<= 992) then
-        self.position.x = self.position.x + self.speed * dt
+    if love.keyboard.isDown("d") then
+        dx = dx + self.speed * dt
         self.facing = 1
         moving = true
     end
 
-    if (spaceDown and not self.jumpWasDown and self.position.y >= self.groundY) then
+    if spaceDown and not self.jumpWasDown and self.onGround then
         self:jump()
     end
-
     self.jumpWasDown = spaceDown
 
     local gravity = self.gravity
-
-    if (spaceDown and self.velocityY < 0 and self.jumpHoldTime < self.maxJumpHold) then
+    if spaceDown and self.velocityY < 0 and self.jumpHoldTime < self.maxJumpHold then
         gravity = self.gravity * 0.35
         self.jumpHoldTime = self.jumpHoldTime + dt
     end
+    self.velocityY = math.min(self.velocityY + gravity * dt, self.maxFallSpeed)
 
-    self.velocityY = self.velocityY + gravity * dt
-    self.position.y = self.position.y + self.velocityY * dt
+    local bx, by, bw, bh = self:getBody()
+    local nx, ny, hitX, hitY = self.collision:move(bx, by, bw, bh, dx, self.velocityY * dt)
+    self.position.x = nx - self.bodyOffX
+    self.position.y = ny - self.bodyOffY
 
-    if (self.position.y >= self.groundY) then
-        self.position.y = self.groundY
+    if hitY then
+        self.onGround = self.velocityY > 0
         self.velocityY = 0
+    else
+        self.onGround = false
     end
 
-    local inAir = self.position.y < self.groundY
-
-    if (self.wasInAir and not inAir) then
-        self:setCharacterAnimation("landing")
-    end
+    local inAir = not self.onGround
 
     self.wasInAir = inAir
 
@@ -157,6 +167,11 @@ function Character:update(dt)
     Character.super.update(self, dt)
 end
 
+function Character:getBody()
+    return self.position.x + self.bodyOffX, self.position.y + self.bodyOffY,
+           self.bodyW, self.bodyH
+end
+
 function Character:shoot()
     self.soundManager:play("shoot")
     local offsetX = 30
@@ -183,11 +198,11 @@ function Character:setCharacterAnimation(name)
 end
 
 function Character:jump()
+    if not self.onGround then   return end
     self.soundManager:play("jump")
-    if self.position.y >= self.groundY then
-        self.velocityY = self.jumpSpeed
-        self.jumpHoldTime = 0
-    end
+    self.velocityY = self.jumpSpeed
+    self.jumpHoldTime = 0
+    self.onGround = false
 end
 
 function Character:recibirDaño(n)
