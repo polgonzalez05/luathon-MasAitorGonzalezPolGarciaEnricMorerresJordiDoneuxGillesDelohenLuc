@@ -499,18 +499,10 @@ function VendingMachine:setCharacterAnimation(name)
   self.currentAnimation = name
 end
 
-return VendingMachine
-
-    local anim = self.animations[name]
-
-    self:setAnimation(anim[1], anim[2], anim[3], anim[4])
-    self.currentAnimation = name
-end
-
 function VendingMachine:setDirection(direction)
   self.forward = Vector(direction, 0)
 
-    self.scale.x = direction
-  end
+  self.scale.x = direction
+end
 
 return VendingMachine
